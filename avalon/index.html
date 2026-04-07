@@ -1,294 +1,473 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>⚔️ Avalon Ultimate</title>
-<style>
-    body { font-family: 'Arial', sans-serif; text-align: center; background:#1a1a2e; color:white; margin: 0; padding: 15px; }
-    h1 { color: #f1c40f; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); margin-bottom: 5px;}
-    h2, h3 { color: #f0f0f0; }
-    
-    button { padding:12px 24px; margin:8px; font-size:16px; font-weight:bold; border-radius: 8px; border: none; background: #2980b9; color: white; cursor: pointer; transition: 0.3s; }
-    button:hover { background: #3498db; }
-    button.btn-evil { background: #c0392b; }
-    button.btn-evil:hover { background: #e74c3c; }
-    button.btn-gold { background: #f1c40f; color: #111; }
-    button.btn-gold:hover { background: #f39c12; }
-    
-    input[type="text"], input[type="number"], select { 
-        padding:10px; margin:5px; font-size: 16px; border-radius: 5px; border: none; text-align: center; width: 80%; max-width: 250px; 
-    }
-    .hidden { display:none !important; }
-    
-    #blindfold { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-    
-    /* กล่องเลือกบทบาทเสริม */
-    .role-options { background: #0f3460; padding: 15px; border-radius: 10px; text-align: left; max-width: 400px; margin: 15px auto; border: 2px solid #e94560; }
-    .role-options label { display: block; margin-bottom: 10px; font-size: 16px; cursor: pointer;}
-    .role-options input { width: auto; margin-right: 10px; transform: scale(1.3); }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⚔️ Avalon Ultimate</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background: #1a1a2e;
+            color: white;
+            margin: 0;
+            padding: 15px;
+        }
 
-    /* กระดานเควสต์ */
-    .quest-board { display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
-    .quest-circle { width: 60px; height: 60px; border-radius: 50%; border: 3px solid #f1c40f; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; background: #222; cursor: pointer; transition: 0.3s; flex-direction: column;}
-    .quest-circle.success { background: #2980b9; border-color: #3498db; }
-    .quest-circle.fail { background: #c0392b; border-color: #e74c3c; }
-    .quest-subtext { font-size: 10px; color: #ccc; font-weight: normal; margin-top: -5px;}
+        h1 {
+            color: #f1c40f;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 5px;
+        }
 
-    /* Modal กติกา */
-    #rulesModal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index: 10000; overflow-y: auto; padding-top: 20px; }
-    .rules-content { background: #16213e; padding: 20px; max-width: 600px; margin: 0 auto 40px auto; border-radius: 10px; text-align: left; line-height: 1.6; border: 2px solid #f1c40f; }
-    .rules-content h3 { color: #f1c40f; border-bottom: 1px solid #555; padding-bottom: 5px;}
-    .text-good { color: #3498db; font-weight: bold; }
-    .text-evil { color: #e74c3c; font-weight: bold; }
-    
-    .status-box { background: #222; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; color: #bdc3c7;}
-</style>
+        h2,
+        h3 {
+            color: #f0f0f0;
+        }
+
+        button {
+            padding: 12px 24px;
+            margin: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            border: none;
+            background: #2980b9;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #3498db;
+        }
+
+        button.btn-evil {
+            background: #c0392b;
+        }
+
+        button.btn-evil:hover {
+            background: #e74c3c;
+        }
+
+        button.btn-gold {
+            background: #f1c40f;
+            color: #111;
+        }
+
+        button.btn-gold:hover {
+            background: #f39c12;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: none;
+            text-align: center;
+            width: 80%;
+            max-width: 250px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #blindfold {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* กล่องเลือกบทบาทเสริม */
+        .role-options {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            max-width: 400px;
+            margin: 15px auto;
+            border: 2px solid #e94560;
+        }
+
+        .role-options label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .role-options input {
+            width: auto;
+            margin-right: 10px;
+            transform: scale(1.3);
+        }
+
+        /* กระดานเควสต์ */
+        .quest-board {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .quest-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid #f1c40f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            background: #222;
+            cursor: pointer;
+            transition: 0.3s;
+            flex-direction: column;
+        }
+
+        .quest-circle.success {
+            background: #2980b9;
+            border-color: #3498db;
+        }
+
+        .quest-circle.fail {
+            background: #c0392b;
+            border-color: #e74c3c;
+        }
+
+        .quest-subtext {
+            font-size: 10px;
+            color: #ccc;
+            font-weight: normal;
+            margin-top: -5px;
+        }
+
+        /* Modal กติกา */
+        #rulesModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            overflow-y: auto;
+            padding-top: 20px;
+        }
+
+        .rules-content {
+            background: #16213e;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto 40px auto;
+            border-radius: 10px;
+            text-align: left;
+            line-height: 1.6;
+            border: 2px solid #f1c40f;
+        }
+
+        .rules-content h3 {
+            color: #f1c40f;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        .text-good {
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        .text-evil {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .status-box {
+            background: #222;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>⚔️ AVALON</h1>
-<p style="margin-top:-5px; color:#bdc3c7;">อัศวินโต๊ะกลมปะทะสมุนมอร์ดเรด</p>
+    <h1>⚔️ AVALON</h1>
+    <p style="margin-top:-5px; color:#bdc3c7;">อัศวินโต๊ะกลมปะทะสมุนมอร์ดเรด</p>
 
-<button class="btn-gold" onclick="toggleRules(true)" style="margin-bottom: 20px;">📜 วิธีการเล่น (กติกา)</button>
+    <button class="btn-gold" onclick="toggleRules(true)" style="margin-bottom: 20px;">📜 วิธีการเล่น (กติกา)</button>
 
-<div id="setup">
-    <div class="status-box">
-        ผู้เล่น 5 คน: ดี 3 / ชั่ว 2<br>
-        ผู้เล่น 6 คน: ดี 4 / ชั่ว 2<br>
-        ผู้เล่น 7 คน: ดี 4 / ชั่ว 3<br>
-        ผู้เล่น 8 คน: ดี 5 / ชั่ว 3<br>
-        ผู้เล่น 9 คน: ดี 6 / ชั่ว 3<br>
-        ผู้เล่น 10 คน: ดี 6 / ชั่ว 4
-    </div>
-
-    <p>จำนวนผู้เล่น (5-10 คน):</p>
-    <input id="playerCount" type="number" value="5" min="5" max="10" oninput="generateInputs()"><br>
-
-    <div class="role-options">
-        <h3 style="margin-top:0; color:#f1c40f; text-align:center;">เปิดใช้บทบาทพิเศษ</h3>
-        <label><input type="checkbox" id="rolePercival" checked> <b>Percival (ฝั่งดี)</b> - รู้ว่าใครคือ Merlin และ Morgana</label>
-        <label><input type="checkbox" id="roleMorgana" checked> <b>Morgana (ฝั่งชั่ว)</b> - ปลอมตัวเป็น Merlin หลอก Percival</label>
-        <label><input type="checkbox" id="roleMordred"> <b>Mordred (ฝั่งชั่ว)</b> - Merlin จะมองไม่เห็นตัวตนของเขา</label>
-        <label><input type="checkbox" id="roleOberon"> <b>Oberon (ฝั่งชั่ว)</b> - ฝั่งชั่วคนอื่นจะไม่รู้จักเขา และเขาไม่รู้จักใคร</label>
-        <p style="font-size:12px; color:#ccc; margin-bottom:0;">* Merlin และ Assassin จะถูกบังคับใส่ในเกมเสมอ</p>
-    </div>
-
-    <div id="nameInputs"></div>
-    <button onclick="startGame()" style="background:#27ae60; margin-top: 20px; width: 80%; max-width: 250px;">เริ่มแจกบทบาท</button>
-</div>
-
-<div id="game" class="hidden">
-    <h2 id="phaseTitle">กระดานเควสต์</h2>
-    <div class="status-box" id="questReqText"></div>
-    
-    <div class="quest-board" id="questBoard">
+    <div id="setup">
+        <div class="status-box">
+            ผู้เล่น 5 คน: ดี 3 / ชั่ว 2<br>
+            ผู้เล่น 6 คน: ดี 4 / ชั่ว 2<br>
+            ผู้เล่น 7 คน: ดี 4 / ชั่ว 3<br>
+            ผู้เล่น 8 คน: ดี 5 / ชั่ว 3<br>
+            ผู้เล่น 9 คน: ดี 6 / ชั่ว 3<br>
+            ผู้เล่น 10 คน: ดี 6 / ชั่ว 4
         </div>
-    <p style="font-size:14px; color:#bdc3c7;">(กดที่วงกลมเพื่อเปลี่ยนสถานะ: ว่าง -> <span class="text-good">สำเร็จ</span> -> <span class="text-evil">ล้มเหลว</span>)</p>
 
-    <br>
-    <button class="btn-evil" onclick="startNightPhase()">🌙 สั่งเริ่มตอนกลางคืน (AI เสียง)</button><br><br>
-    <button class="btn-gold" onclick="toggleRules(true)">📜 ดูวิธีการเล่น</button>
-    <button onclick="location.reload()" style="background:#7f8c8d;">เริ่มเกมใหม่</button>
-</div>
+        <p>จำนวนผู้เล่น (5-10 คน):</p>
+        <input id="playerCount" type="number" value="5" min="5" max="10" oninput="generateInputs()"><br>
 
-<div id="blindfold" class="hidden">
-    <h2 id="blindfoldText">ส่งมือถือให้ ...</h2>
-    <button onclick="revealRole()" class="btn-gold">ฉันคือคนนี้ (ดูบทบาท)</button>
-</div>
+        <div class="role-options">
+            <h3 style="margin-top:0; color:#f1c40f; text-align:center;">เปิดใช้บทบาทพิเศษ</h3>
+            <label><input type="checkbox" id="rolePercival" checked> <b>Percival (ฝั่งดี)</b> - รู้ว่าใครคือ Merlin และ
+                Morgana</label>
+            <label><input type="checkbox" id="roleMorgana" checked> <b>Morgana (ฝั่งชั่ว)</b> - ปลอมตัวเป็น Merlin หลอก
+                Percival</label>
+            <label><input type="checkbox" id="roleMordred"> <b>Mordred (ฝั่งชั่ว)</b> - Merlin
+                จะมองไม่เห็นตัวตนของเขา</label>
+            <label><input type="checkbox" id="roleOberon"> <b>Oberon (ฝั่งชั่ว)</b> - ฝั่งชั่วคนอื่นจะไม่รู้จักเขา
+                และเขาไม่รู้จักใคร</label>
+            <p style="font-size:12px; color:#ccc; margin-bottom:0;">* Merlin และ Assassin จะถูกบังคับใส่ในเกมเสมอ</p>
+        </div>
 
-<div id="rulesModal" class="hidden">
-    <div class="rules-content">
-        <h2 style="text-align:center; color:white; margin-top:0;">📜 วิธีการเล่น Avalon</h2>
-        
-        <h3>เป้าหมายของเกม</h3>
-        <p><span class="text-good">ทีมอัศวิน (ฝั่งดี)</span> จะชนะเมื่อทำภารกิจ (Quest) สำเร็จ 3 ครั้ง และปกป้องเมอร์ลินจากการถูกลอบสังหารได้</p>
-        <p><span class="text-evil">ทีมสมุนมอร์ดเรด (ฝั่งชั่ว)</span> จะชนะเมื่อภารกิจล้มเหลว 3 ครั้ง <b>หรือ</b> ลอบสังหารเมอร์ลินได้สำเร็จในตอนจบเกม</p>
+        <div id="nameInputs"></div>
+        <button onclick="startGame()"
+            style="background:#27ae60; margin-top: 20px; width: 80%; max-width: 250px;">เริ่มแจกบทบาท</button>
+    </div>
 
-        <h3>การจัดทีมและโหวต (ช่วงกลางวัน)</h3>
-        <p>1. ผู้เล่นผลัดกันเป็น "ผู้นำ" (Leader) โดยผู้นำจะเลือกสมาชิกไปทำภารกิจ (ตามจำนวนที่กำหนดในแต่ละรอบ)</p>
-        <p>2. ทุกคนในวง (รวมถึงคนที่ไม่ได้ไป) ต้องโหวต <b>"เห็นด้วย"</b> หรือ <b>"ไม่เห็นด้วย"</b> กับทีมนี้</p>
-        <p>3. ถ้าเสียงส่วนใหญ่เห็นด้วย ทีมจะได้ไปทำภารกิจ / ถ้าเสมอหรือไม่เห็นด้วย เปลี่ยนผู้นำและจัดทีมใหม่ <i>(คำเตือน: ถ้าโหวตไม่ผ่านติดกัน 5 ครั้ง ฝั่งชั่วชนะทันที!)</i></p>
+    <div id="game" class="hidden">
+        <h2 id="phaseTitle">กระดานเควสต์</h2>
+        <div class="status-box" id="questReqText"></div>
 
-        <h3>การทำภารกิจ (ช่วงไปทำเควสต์)</h3>
-        <p>คนที่ถูกเลือกไปภารกิจ ต้องแอบส่งการ์ด "สำเร็จ" หรือ "ล้มเหลว"<br>
-        - <span class="text-good">ฝั่งดี</span> <b>ต้อง</b> ส่งการ์ด สำเร็จ เท่านั้น!<br>
-        - <span class="text-evil">ฝั่งชั่ว</span> เลือกส่ง สำเร็จ (เพื่อเนียน) หรือ ล้มเหลว ก็ได้<br>
-        <i>* มีการ์ดล้มเหลวแค่ 1 ใบ ภารกิจนั้นถือว่าพังทันที! (ยกเว้นบางเควสต์ของคน 7-10 คน ที่อาจต้องการ 2 ใบ)</i></p>
+        <div class="quest-board" id="questBoard">
+        </div>
+        <p style="font-size:14px; color:#bdc3c7;">(กดที่วงกลมเพื่อเปลี่ยนสถานะ: ว่าง -> <span
+                class="text-good">สำเร็จ</span> -> <span class="text-evil">ล้มเหลว</span>)</p>
 
-        <h3>ตัวละครพิเศษ</h3>
-        <p><b><span class="text-good">Merlin:</span></b> รู้ว่าใครคือฝั่งชั่ว (ยกเว้น Mordred) แต่ห้ามแสดงตัวชัดเจน ไม่งั้นจะโดนลอบฆ่าตอนจบ<br>
-        <b><span class="text-good">Percival:</span></b> รู้ว่า Merlin และ Morgana คือใคร (แต่แยกไม่ออกว่าใครคือตัวจริง)<br>
-        <b><span class="text-evil">Assassin:</span></b> ตอนจบเกมถ้าฝั่งดีชนะ มีสิทธิ์ปรึกษาเพื่อนเพื่อทายว่าใครคือ Merlin ถ้าทายถูกฝั่งชั่วพลิกชนะทันที!<br>
-        <b><span class="text-evil">Morgana:</span></b> ปรากฏตัวในสายตา Percival ว่าตัวเองคือ Merlin<br>
-        <b><span class="text-evil">Mordred:</span></b> บอสใหญ่ฝั่งชั่ว ที่ Merlin จะมองไม่เห็น<br>
-        <b><span class="text-evil">Oberon:</span></b> ตัวแปลกแยกฝั่งชั่ว ไม่รู้จักฝั่งชั่วคนอื่น และฝั่งชั่วก็ไม่รู้จักเขา</p>
+        <br>
+        <button class="btn-evil" onclick="startNightPhase()">🌙 สั่งเริ่มตอนกลางคืน (AI เสียง)</button><br><br>
+        <button class="btn-gold" onclick="toggleRules(true)">📜 ดูวิธีการเล่น</button>
+        <button onclick="location.reload()" style="background:#7f8c8d;">เริ่มเกมใหม่</button>
+    </div>
 
-        <div style="text-align:center; margin-top:30px;">
-            <button onclick="toggleRules(false)" class="btn-evil">ปิดหน้าต่างนี้</button>
+    <div id="blindfold" class="hidden">
+        <h2 id="blindfoldText">ส่งมือถือให้ ...</h2>
+        <button onclick="revealRole()" class="btn-gold">ฉันคือคนนี้ (ดูบทบาท)</button>
+    </div>
+
+    <div id="rulesModal" class="hidden">
+        <div class="rules-content">
+            <h2 style="text-align:center; color:white; margin-top:0;">📜 วิธีการเล่น Avalon</h2>
+
+            <h3>เป้าหมายของเกม</h3>
+            <p><span class="text-good">ทีมอัศวิน (ฝั่งดี)</span> จะชนะเมื่อทำภารกิจ (Quest) สำเร็จ 3 ครั้ง
+                และปกป้องเมอร์ลินจากการถูกลอบสังหารได้</p>
+            <p><span class="text-evil">ทีมสมุนมอร์ดเรด (ฝั่งชั่ว)</span> จะชนะเมื่อภารกิจล้มเหลว 3 ครั้ง <b>หรือ</b>
+                ลอบสังหารเมอร์ลินได้สำเร็จในตอนจบเกม</p>
+
+            <h3>การจัดทีมและโหวต (ช่วงกลางวัน)</h3>
+            <p>1. ผู้เล่นผลัดกันเป็น "ผู้นำ" (Leader) โดยผู้นำจะเลือกสมาชิกไปทำภารกิจ (ตามจำนวนที่กำหนดในแต่ละรอบ)</p>
+            <p>2. ทุกคนในวง (รวมถึงคนที่ไม่ได้ไป) ต้องโหวต <b>"เห็นด้วย"</b> หรือ <b>"ไม่เห็นด้วย"</b> กับทีมนี้</p>
+            <p>3. ถ้าเสียงส่วนใหญ่เห็นด้วย ทีมจะได้ไปทำภารกิจ / ถ้าเสมอหรือไม่เห็นด้วย เปลี่ยนผู้นำและจัดทีมใหม่
+                <i>(คำเตือน: ถ้าโหวตไม่ผ่านติดกัน 5 ครั้ง ฝั่งชั่วชนะทันที!)</i></p>
+
+            <h3>การทำภารกิจ (ช่วงไปทำเควสต์)</h3>
+            <p>คนที่ถูกเลือกไปภารกิจ ต้องแอบส่งการ์ด "สำเร็จ" หรือ "ล้มเหลว"<br>
+                - <span class="text-good">ฝั่งดี</span> <b>ต้อง</b> ส่งการ์ด สำเร็จ เท่านั้น!<br>
+                - <span class="text-evil">ฝั่งชั่ว</span> เลือกส่ง สำเร็จ (เพื่อเนียน) หรือ ล้มเหลว ก็ได้<br>
+                <i>* มีการ์ดล้มเหลวแค่ 1 ใบ ภารกิจนั้นถือว่าพังทันที! (ยกเว้นบางเควสต์ของคน 7-10 คน ที่อาจต้องการ 2
+                    ใบ)</i>
+            </p>
+
+            <h3>ตัวละครพิเศษ</h3>
+            <p><b><span class="text-good">Merlin:</span></b> รู้ว่าใครคือฝั่งชั่ว (ยกเว้น Mordred) แต่ห้ามแสดงตัวชัดเจน
+                ไม่งั้นจะโดนลอบฆ่าตอนจบ<br>
+                <b><span class="text-good">Percival:</span></b> รู้ว่า Merlin และ Morgana คือใคร
+                (แต่แยกไม่ออกว่าใครคือตัวจริง)<br>
+                <b><span class="text-evil">Assassin:</span></b> ตอนจบเกมถ้าฝั่งดีชนะ
+                มีสิทธิ์ปรึกษาเพื่อนเพื่อทายว่าใครคือ Merlin ถ้าทายถูกฝั่งชั่วพลิกชนะทันที!<br>
+                <b><span class="text-evil">Morgana:</span></b> ปรากฏตัวในสายตา Percival ว่าตัวเองคือ Merlin<br>
+                <b><span class="text-evil">Mordred:</span></b> บอสใหญ่ฝั่งชั่ว ที่ Merlin จะมองไม่เห็น<br>
+                <b><span class="text-evil">Oberon:</span></b> ตัวแปลกแยกฝั่งชั่ว ไม่รู้จักฝั่งชั่วคนอื่น
+                และฝั่งชั่วก็ไม่รู้จักเขา
+            </p>
+
+            <div style="text-align:center; margin-top:30px;">
+                <button onclick="toggleRules(false)" class="btn-evil">ปิดหน้าต่างนี้</button>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
-// ================= ข้อมูลเกมและกติกา =================
-const questMatrix = {
-    5: [2, 3, 2, 3, 3],
-    6: [2, 3, 4, 3, 4],
-    7: [2, 3, 3, 4, 4], // เควสต์ 4 ต้องการ fail 2 ใบ
-    8: [3, 4, 4, 5, 5], // เควสต์ 4 ต้องการ fail 2 ใบ
-    9: [3, 4, 4, 5, 5], // เควสต์ 4 ต้องการ fail 2 ใบ
-    10: [3, 4, 4, 5, 5] // เควสต์ 4 ต้องการ fail 2 ใบ
-};
+    <script>
+        // ================= ข้อมูลเกมและกติกา =================
+        const questMatrix = {
+            5: [2, 3, 2, 3, 3],
+            6: [2, 3, 4, 3, 4],
+            7: [2, 3, 3, 4, 4], // เควสต์ 4 ต้องการ fail 2 ใบ
+            8: [3, 4, 4, 5, 5], // เควสต์ 4 ต้องการ fail 2 ใบ
+            9: [3, 4, 4, 5, 5], // เควสต์ 4 ต้องการ fail 2 ใบ
+            10: [3, 4, 4, 5, 5] // เควสต์ 4 ต้องการ fail 2 ใบ
+        };
 
-const alignmentLogic = {
-    5: { good: 3, evil: 2 },
-    6: { good: 4, evil: 2 },
-    7: { good: 4, evil: 3 },
-    8: { good: 5, evil: 3 },
-    9: { good: 6, evil: 3 },
-    10: { good: 6, evil: 4 }
-};
+        const alignmentLogic = {
+            5: { good: 3, evil: 2 },
+            6: { good: 4, evil: 2 },
+            7: { good: 4, evil: 3 },
+            8: { good: 5, evil: 3 },
+            9: { good: 6, evil: 3 },
+            10: { good: 6, evil: 4 }
+        };
 
-let players = [];
-let currentPlayer = 0;
-let playerCount = 5;
+        let players = [];
+        let currentPlayer = 0;
+        let playerCount = 5;
 
-// สถานะ Roles ในเกมตานี้ (เพื่อใช้กำหนดเสียงตอนกลางคืน)
-let rolesInPlay = {
-    percival: false,
-    morgana: false,
-    mordred: false,
-    oberon: false
-};
+        // สถานะ Roles ในเกมตานี้ (เพื่อใช้กำหนดเสียงตอนกลางคืน)
+        let rolesInPlay = {
+            percival: false,
+            morgana: false,
+            mordred: false,
+            oberon: false
+        };
 
-// ================= ระบบเสียง AI =================
-function speak(text, callback) {
-    if (!window.speechSynthesis) {
-        if(callback) setTimeout(callback, 3000);
-        return;
-    }
-    let msg = new SpeechSynthesisUtterance(text);
-    msg.lang = "th-TH";
-    msg.pitch = 0.9;
-    msg.rate = 0.85; // พูดช้าลงนิดนึงให้ทำตามทัน
-    msg.onend = function() {
-        if(callback) callback();
-    };
-    speechSynthesis.cancel();
-    speechSynthesis.speak(msg);
-}
+        // ================= ระบบเสียง AI =================
+        function speak(text, callback) {
+            if (!window.speechSynthesis) {
+                if (callback) setTimeout(callback, 3000);
+                return;
+            }
+            let msg = new SpeechSynthesisUtterance(text);
+            msg.lang = "th-TH";
+            msg.pitch = 0.9;
+            msg.rate = 0.85; // พูดช้าลงนิดนึงให้ทำตามทัน
+            msg.onend = function () {
+                if (callback) callback();
+            };
+            speechSynthesis.cancel();
+            speechSynthesis.speak(msg);
+        }
 
-// ================= เปิด/ปิด กติกา =================
-function toggleRules(show) {
-    if (show) {
-        document.getElementById("rulesModal").classList.remove("hidden");
-    } else {
-        document.getElementById("rulesModal").classList.add("hidden");
-    }
-}
+        // ================= เปิด/ปิด กติกา =================
+        function toggleRules(show) {
+            if (show) {
+                document.getElementById("rulesModal").classList.remove("hidden");
+            } else {
+                document.getElementById("rulesModal").classList.add("hidden");
+            }
+        }
 
-// ================= เริ่มเกม & จัดแจง =================
-window.onload = function() {
-    generateInputs();
-};
+        // ================= เริ่มเกม & จัดแจง =================
+        window.onload = function () {
+            generateInputs();
+        };
 
-function generateInputs() {
-    let countInput = document.getElementById("playerCount").value;
-    playerCount = Math.max(5, Math.min(10, parseInt(countInput) || 5));
-    let html = "";
-    for(let i=0; i<playerCount; i++) {
-        html += `<input type="text" id="name${i}" placeholder="ชื่อผู้เล่น ${i+1}"><br>`;
-    }
-    document.getElementById("nameInputs").innerHTML = html;
-}
+        function generateInputs() {
+            let countInput = document.getElementById("playerCount").value;
+            playerCount = Math.max(5, Math.min(10, parseInt(countInput) || 5));
+            let html = "";
+            for (let i = 0; i < playerCount; i++) {
+                html += `<input type="text" id="name${i}" placeholder="ชื่อผู้เล่น ${i + 1}"><br>`;
+            }
+            document.getElementById("nameInputs").innerHTML = html;
+        }
 
-function shuffle(array) {
-    return array.sort(() => Math.random() - 0.5);
-}
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
 
-function startGame() {
-    let count = playerCount;
-    let maxGood = alignmentLogic[count].good;
-    let maxEvil = alignmentLogic[count].evil;
+        function startGame() {
+            unlockAudioOnMobile();
+            let count = playerCount;
+            let maxGood = alignmentLogic[count].good;
+            let maxEvil = alignmentLogic[count].evil;
 
-    let goodRoles = ["merlin"]; // บังคับมี
-    let evilRoles = ["assassin"]; // บังคับมี
+            let goodRoles = ["merlin"]; // บังคับมี
+            let evilRoles = ["assassin"]; // บังคับมี
 
-    // เช็คตัวละครพิเศษ
-    rolesInPlay.percival = document.getElementById("rolePercival").checked;
-    rolesInPlay.morgana = document.getElementById("roleMorgana").checked;
-    rolesInPlay.mordred = document.getElementById("roleMordred").checked;
-    rolesInPlay.oberon = document.getElementById("roleOberon").checked;
+            // เช็คตัวละครพิเศษ
+            rolesInPlay.percival = document.getElementById("rolePercival").checked;
+            rolesInPlay.morgana = document.getElementById("roleMorgana").checked;
+            rolesInPlay.mordred = document.getElementById("roleMordred").checked;
+            rolesInPlay.oberon = document.getElementById("roleOberon").checked;
 
-    if (rolesInPlay.percival) goodRoles.push("percival");
-    if (rolesInPlay.morgana) evilRoles.push("morgana");
-    if (rolesInPlay.mordred) evilRoles.push("mordred");
-    if (rolesInPlay.oberon) evilRoles.push("oberon");
+            if (rolesInPlay.percival) goodRoles.push("percival");
+            if (rolesInPlay.morgana) evilRoles.push("morgana");
+            if (rolesInPlay.mordred) evilRoles.push("mordred");
+            if (rolesInPlay.oberon) evilRoles.push("oberon");
 
-    // ตรวจสอบว่าโควต้าชั่วล้นไหม
-    if (evilRoles.length > maxEvil) {
-        alert(`ใส่บทบาทฝั่งชั่วเกินโควต้า! (เกมนี้มีฝั่งชั่วได้แค่ ${maxEvil} คน แต่คุณเลือกไป ${evilRoles.length} คน) โปรดเอาออกบ้าง`);
-        return;
-    }
+            // ตรวจสอบว่าโควต้าชั่วล้นไหม
+            if (evilRoles.length > maxEvil) {
+                alert(`ใส่บทบาทฝั่งชั่วเกินโควต้า! (เกมนี้มีฝั่งชั่วได้แค่ ${maxEvil} คน แต่คุณเลือกไป ${evilRoles.length} คน) โปรดเอาออกบ้าง`);
+                return;
+            }
 
-    // เติมตัวละครธรรมดาให้เต็ม
-    while (goodRoles.length < maxGood) goodRoles.push("loyal_servant");
-    while (evilRoles.length < maxEvil) evilRoles.push("minion");
+            // เติมตัวละครธรรมดาให้เต็ม
+            while (goodRoles.length < maxGood) goodRoles.push("loyal_servant");
+            while (evilRoles.length < maxEvil) evilRoles.push("minion");
 
-    let allRoles = shuffle(goodRoles.concat(evilRoles));
+            let allRoles = shuffle(goodRoles.concat(evilRoles));
 
-    players = [];
-    for(let i=0; i<count; i++) {
-        let nameField = document.getElementById("name"+i).value;
-        let name = nameField ? nameField : ("Player "+(i+1));
-        players.push({ name: name, role: allRoles[i] });
-    }
+            players = [];
+            for (let i = 0; i < count; i++) {
+                let nameField = document.getElementById("name" + i).value;
+                let name = nameField ? nameField : ("Player " + (i + 1));
+                players.push({ name: name, role: allRoles[i] });
+            }
 
-    document.getElementById("setup").classList.add("hidden");
-    document.getElementById("game").classList.remove("hidden");
+            document.getElementById("setup").classList.add("hidden");
+            document.getElementById("game").classList.remove("hidden");
 
-    buildQuestBoard();
+            buildQuestBoard();
 
-    currentPlayer = 0;
-    showRole();
-}
+            currentPlayer = 0;
+            showRole();
+        }
 
-function getRoleDetail(role) {
-    switch(role) {
-        case "merlin": return { name: "🧙‍♂️ Merlin", side: "good", desc: "คุณคือผู้วิเศษ (ฝั่งดี) คุณรู้ว่าใครคือฝั่งชั่วบ้าง (ชูนิ้วโป้งในตอนกลางคืน) แต่คุณห้ามเปิดเผยตัวตนเด็ดขาด ไม่งั้นจะโดนลอบสังหาร" };
-        case "percival": return { name: "🛡️ Percival", side: "good", desc: "คุณคืออัศวินคนสนิท (ฝั่งดี) คุณรู้ว่า Merlin และ Morgana คือใคร (พวกเขาจะชูนิ้วโป้งให้คุณดู) แต่คุณจะไม่รู้ว่าใครคือตัวจริง ปกป้องเมอร์ลินให้ได้!" };
-        case "loyal_servant": return { name: "🗡️ Loyal Servant", side: "good", desc: "คุณคืออัศวินผู้ซื่อสัตย์ (ฝั่งดี) คุณไม่มีพลังพิเศษ จงใช้สัญชาตญาณจับผิดคนชั่วและทำภารกิจให้สำเร็จ" };
-        case "assassin": return { name: "🥷 Assassin", side: "evil", desc: "คุณคือนักฆ่า (ฝั่งชั่ว) จงขัดขวางภารกิจ และถ้าฝั่งดีชนะ คุณมีโอกาสสุ่มเดาว่าใครคือ Merlin ถ้าทายถูก ฝั่งชั่วชนะทันที!" };
-        case "morgana": return { name: "🦹‍♀️ Morgana", side: "evil", desc: "คุณคือแม่มด (ฝั่งชั่ว) คุณจะทำตัวหลอก Percival ว่าคุณคือ Merlin (คุณจะได้ชูนิ้วโป้งพร้อมเมอร์ลินในตอนกลางคืน)" };
-        case "mordred": return { name: "🧛‍♂️ Mordred", side: "evil", desc: "คุณคือบอสใหญ่ (ฝั่งชั่ว) พลังของคุณคือการซ่อนตัวจาก Merlin (ตอนเมอร์ลินตื่น คุณไม่ต้องชูนิ้วโป้ง)" };
-        case "oberon": return { name: "👹 Oberon", side: "evil", desc: "คุณคือตัวประหลาด (ฝั่งชั่ว) คุณไม่รู้จักเพื่อนฝั่งชั่ว และเพื่อนก็ไม่รู้จักคุณ (คุณไม่ต้องลืมตาตอนฝั่งชั่วตื่น แต่ต้องชูนิ้วให้เมอร์ลินเห็น)" };
-        case "minion": return { name: "👺 Minion of Mordred", side: "evil", desc: "คุณคือลูกสมุน (ฝั่งชั่ว) คุณและเพื่อนฝั่งชั่วจะรู้จักกัน จงแฝงตัวเข้าไปทำลายภารกิจให้ล้มเหลว!" };
-    }
-}
+        function getRoleDetail(role) {
+            switch (role) {
+                case "merlin": return { name: "🧙‍♂️ Merlin", side: "good", desc: "คุณคือผู้วิเศษ (ฝั่งดี) คุณรู้ว่าใครคือฝั่งชั่วบ้าง (ชูนิ้วโป้งในตอนกลางคืน) แต่คุณห้ามเปิดเผยตัวตนเด็ดขาด ไม่งั้นจะโดนลอบสังหาร" };
+                case "percival": return { name: "🛡️ Percival", side: "good", desc: "คุณคืออัศวินคนสนิท (ฝั่งดี) คุณรู้ว่า Merlin และ Morgana คือใคร (พวกเขาจะชูนิ้วโป้งให้คุณดู) แต่คุณจะไม่รู้ว่าใครคือตัวจริง ปกป้องเมอร์ลินให้ได้!" };
+                case "loyal_servant": return { name: "🗡️ Loyal Servant", side: "good", desc: "คุณคืออัศวินผู้ซื่อสัตย์ (ฝั่งดี) คุณไม่มีพลังพิเศษ จงใช้สัญชาตญาณจับผิดคนชั่วและทำภารกิจให้สำเร็จ" };
+                case "assassin": return { name: "🥷 Assassin", side: "evil", desc: "คุณคือนักฆ่า (ฝั่งชั่ว) จงขัดขวางภารกิจ และถ้าฝั่งดีชนะ คุณมีโอกาสสุ่มเดาว่าใครคือ Merlin ถ้าทายถูก ฝั่งชั่วชนะทันที!" };
+                case "morgana": return { name: "🦹‍♀️ Morgana", side: "evil", desc: "คุณคือแม่มด (ฝั่งชั่ว) คุณจะทำตัวหลอก Percival ว่าคุณคือ Merlin (คุณจะได้ชูนิ้วโป้งพร้อมเมอร์ลินในตอนกลางคืน)" };
+                case "mordred": return { name: "🧛‍♂️ Mordred", side: "evil", desc: "คุณคือบอสใหญ่ (ฝั่งชั่ว) พลังของคุณคือการซ่อนตัวจาก Merlin (ตอนเมอร์ลินตื่น คุณไม่ต้องชูนิ้วโป้ง)" };
+                case "oberon": return { name: "👹 Oberon", side: "evil", desc: "คุณคือตัวประหลาด (ฝั่งชั่ว) คุณไม่รู้จักเพื่อนฝั่งชั่ว และเพื่อนก็ไม่รู้จักคุณ (คุณไม่ต้องลืมตาตอนฝั่งชั่วตื่น แต่ต้องชูนิ้วให้เมอร์ลินเห็น)" };
+                case "minion": return { name: "👺 Minion of Mordred", side: "evil", desc: "คุณคือลูกสมุน (ฝั่งชั่ว) คุณและเพื่อนฝั่งชั่วจะรู้จักกัน จงแฝงตัวเข้าไปทำลายภารกิจให้ล้มเหลว!" };
+            }
+        }
 
-// ================= หน้าจอส่งมือถือ =================
-function showRole() {
-    if(currentPlayer >= players.length) {
-        document.getElementById("blindfold").classList.add("hidden");
-        document.getElementById("game").classList.remove("hidden");
-        alert("ทุกคนดูบทบาทครบแล้ว! กรุณากดปุ่ม 'สั่งเริ่มตอนกลางคืน'");
-        return;
-    }
-    let p = players[currentPlayer];
-    document.getElementById("game").classList.add("hidden");
-    document.getElementById("blindfold").classList.remove("hidden");
-    document.getElementById("blindfoldText").innerText = `ส่งมือถือให้ ${p.name}`;
-}
+        // ================= หน้าจอส่งมือถือ =================
+        function showRole() {
+            if (currentPlayer >= players.length) {
+                document.getElementById("blindfold").classList.add("hidden");
+                document.getElementById("game").classList.remove("hidden");
+                alert("ทุกคนดูบทบาทครบแล้ว! กรุณากดปุ่ม 'สั่งเริ่มตอนกลางคืน'");
+                return;
+            }
+            let p = players[currentPlayer];
+            document.getElementById("game").classList.add("hidden");
+            document.getElementById("blindfold").classList.remove("hidden");
+            document.getElementById("blindfoldText").innerText = `ส่งมือถือให้ ${p.name}`;
+        }
 
-function revealRole() {
-    let p = players[currentPlayer];
-    let roleData = getRoleDetail(p.role);
-    let color = roleData.side === "good" ? "#3498db" : "#e74c3c";
-    let team = roleData.side === "good" ? "อัศวินแห่งอาเธอร์ (ทีมดี)" : "สมุนมอร์ดเรด (ทีมชั่ว)";
+        function revealRole() {
+            let p = players[currentPlayer];
+            let roleData = getRoleDetail(p.role);
+            let color = roleData.side === "good" ? "#3498db" : "#e74c3c";
+            let team = roleData.side === "good" ? "อัศวินแห่งอาเธอร์ (ทีมดี)" : "สมุนมอร์ดเรด (ทีมชั่ว)";
 
-    document.getElementById("blindfold").innerHTML = `
+            document.getElementById("blindfold").innerHTML = `
         <h2 style="color:#bdc3c7;">ผู้เล่น: ${p.name}</h2>
         <h1 style="color:${color}; font-size:36px; margin-bottom:0;">${roleData.name}</h1>
         <p style="color:${color}; font-weight:bold; margin-top:5px;">[ ${team} ]</p>
@@ -296,91 +475,91 @@ function revealRole() {
         <br>
         <button class="btn-gold" onclick="nextPlayer()">จำได้แล้ว ซ่อนและส่งต่อ</button>
     `;
-}
+        }
 
-function nextPlayer() {
-    document.getElementById("blindfold").innerHTML = `
+        function nextPlayer() {
+            document.getElementById("blindfold").innerHTML = `
         <h2 id="blindfoldText">ส่งมือถือให้ ...</h2>
         <button onclick="revealRole()" class="btn-gold">ฉันคือคนนี้ (ดูบทบาท)</button>
     `;
-    currentPlayer++;
-    showRole();
-}
+            currentPlayer++;
+            showRole();
+        }
 
-// ================= ระบบกระดานเควสต์ =================
-function buildQuestBoard() {
-    let quests = questMatrix[playerCount];
-    let boardHtml = "";
-    let reqText = `จำนวนคนที่ต้องไปทำเควสต์ (ผู้เล่น ${playerCount} คน):<br>`;
-    
-    for(let i=0; i<5; i++) {
-        let isTwoFails = (playerCount >= 7 && i === 3) ? "*" : "";
-        reqText += `Q${i+1}: <b>${quests[i]} คน</b>${isTwoFails ? " (ล้มเหลว 2 ใบ)" : ""} | `;
-        
-        boardHtml += `
+        // ================= ระบบกระดานเควสต์ =================
+        function buildQuestBoard() {
+            let quests = questMatrix[playerCount];
+            let boardHtml = "";
+            let reqText = `จำนวนคนที่ต้องไปทำเควสต์ (ผู้เล่น ${playerCount} คน):<br>`;
+
+            for (let i = 0; i < 5; i++) {
+                let isTwoFails = (playerCount >= 7 && i === 3) ? "*" : "";
+                reqText += `Q${i + 1}: <b>${quests[i]} คน</b>${isTwoFails ? " (ล้มเหลว 2 ใบ)" : ""} | `;
+
+                boardHtml += `
             <div class="quest-circle" id="q${i}" onclick="toggleQuestState(${i})">
                 ${quests[i]}${isTwoFails}
-                <div class="quest-subtext">Q${i+1}</div>
+                <div class="quest-subtext">Q${i + 1}</div>
             </div>
         `;
-    }
-    document.getElementById("questBoard").innerHTML = boardHtml;
-    document.getElementById("questReqText").innerHTML = reqText.slice(0, -2);
-}
+            }
+            document.getElementById("questBoard").innerHTML = boardHtml;
+            document.getElementById("questReqText").innerHTML = reqText.slice(0, -2);
+        }
 
-// คลิกเปลี่ยนสีวงกลมเควสต์ (ว่าง -> น้ำเงิน -> แดง)
-function toggleQuestState(index) {
-    let el = document.getElementById("q"+index);
-    if (el.classList.contains("success")) {
-        el.classList.remove("success");
-        el.classList.add("fail");
-    } else if (el.classList.contains("fail")) {
-        el.classList.remove("fail");
-    } else {
-        el.classList.add("success");
-    }
-}
+        // คลิกเปลี่ยนสีวงกลมเควสต์ (ว่าง -> น้ำเงิน -> แดง)
+        function toggleQuestState(index) {
+            let el = document.getElementById("q" + index);
+            if (el.classList.contains("success")) {
+                el.classList.remove("success");
+                el.classList.add("fail");
+            } else if (el.classList.contains("fail")) {
+                el.classList.remove("fail");
+            } else {
+                el.classList.add("success");
+            }
+        }
 
-// ================= ลำดับตอนกลางคืน (NIGHT PHASE AI) =================
-function startNightPhase() {
-    let delay = 5000; // เวลาหน่วงระหว่างคำสั่ง (มิลลิวินาที)
-    
-    document.getElementById("game").innerHTML = `
+        // ================= ลำดับตอนกลางคืน (NIGHT PHASE AI) =================
+        function startNightPhase() {
+            let delay = 5000; // เวลาหน่วงระหว่างคำสั่ง (มิลลิวินาที)
+
+            document.getElementById("game").innerHTML = `
         <h1 style="color:#f1c40f;">🌙 กลางคืนกำลังทำงาน...</h1>
         <p>ให้ทุกคนหลับตา และทำตามเสียง AI คุมเกม</p>
         <p style="color:#e74c3c; font-size:12px;">(กรุณาเปิดเสียงลำโพงมือถือ)</p>
     `;
 
-    let script = [];
-    script.push("ทุกคนหลับตา และยื่นมือออกมาข้างหน้า ทำเป็นกำปั้น");
-    
-    script.push("ลูกสมุนของมอร์ดเรด ลืมตา และมองหาพรรคพวกของคุณ");
-    script.push("ลูกสมุนของมอร์ดเรด หลับตาลง");
+            let script = [];
+            script.push("ทุกคนหลับตา และยื่นมือออกมาข้างหน้า ทำเป็นกำปั้น");
 
-    script.push("ลูกสมุนของมอร์ดเรดทุกคน ยกเว้นมอร์ดเรด ชูนิ้วโป้งขึ้นมา เพื่อให้เมอร์ลินรู้ตัว");
-    script.push("เมอร์ลิน ลืมตาขึ้น เพื่อดูว่าใครคือคนชั่ว");
-    script.push("ลูกสมุนของมอร์ดเรด เอานิ้วลง และ เมอร์ลิน หลับตาลง");
+            script.push("ลูกสมุนของมอร์ดเรด ลืมตา และมองหาพรรคพวกของคุณ");
+            script.push("ลูกสมุนของมอร์ดเรด หลับตาลง");
 
-    if (rolesInPlay.percival) {
-        script.push("เมอร์ลิน และ มอร์กาน่า ชูนิ้วโป้งขึ้นมา");
-        script.push("เพอร์ซิวาล ลืมตาขึ้น เพื่อดูว่าใครคือเมอร์ลินและมอร์กาน่า");
-        script.push("เอาหิ้วลง และ เพอร์ซิวาล หลับตาลง");
-    }
+            script.push("ลูกสมุนของมอร์ดเรดทุกคน ยกเว้นมอร์ดเรด ชูนิ้วโป้งขึ้นมา เพื่อให้เมอร์ลินรู้ตัว");
+            script.push("เมอร์ลิน ลืมตาขึ้น เพื่อดูว่าใครคือคนชั่ว");
+            script.push("ลูกสมุนของมอร์ดเรด เอานิ้วลง และ เมอร์ลิน หลับตาลง");
 
-    script.push("ทุกคนลืมตา... เช้าวันใหม่เริ่มต้นขึ้นแล้ว จัดทีมไปทำเควสต์แรกได้เลย");
+            if (rolesInPlay.percival) {
+                script.push("เมอร์ลิน และ มอร์กาน่า ชูนิ้วโป้งขึ้นมา");
+                script.push("เพอร์ซิวาล ลืมตาขึ้น เพื่อดูว่าใครคือเมอร์ลินและมอร์กาน่า");
+                script.push("เอาหิ้วลง และ เพอร์ซิวาล หลับตาลง");
+            }
 
-    // รันเสียงตามลำดับ
-    let step = 0;
-    function playNextVoice() {
-        if (step < script.length) {
-            speak(script[step], () => {
-                step++;
-                setTimeout(playNextVoice, step === script.length ? 0 : 3500); // หน่วง 3.5 วิก่อนพูดประโยคถัดไป (ให้เวลาคนขยับตัว)
-            });
-        } else {
-            // คืนหน้ากระดานกลับมาเมื่อพูดจบ
-            setTimeout(() => {
-                document.getElementById("game").innerHTML = `
+            script.push("ทุกคนลืมตา... เช้าวันใหม่เริ่มต้นขึ้นแล้ว จัดทีมไปทำเควสต์แรกได้เลย");
+
+            // รันเสียงตามลำดับ
+            let step = 0;
+            function playNextVoice() {
+                if (step < script.length) {
+                    speak(script[step], () => {
+                        step++;
+                        setTimeout(playNextVoice, step === script.length ? 0 : 3500); // หน่วง 3.5 วิก่อนพูดประโยคถัดไป (ให้เวลาคนขยับตัว)
+                    });
+                } else {
+                    // คืนหน้ากระดานกลับมาเมื่อพูดจบ
+                    setTimeout(() => {
+                        document.getElementById("game").innerHTML = `
                     <h2 id="phaseTitle">กระดานเควสต์</h2>
                     <div class="status-box" id="questReqText"></div>
                     <div class="quest-board" id="questBoard"></div>
@@ -389,14 +568,28 @@ function startNightPhase() {
                     <button class="btn-gold" onclick="toggleRules(true)">📜 ดูวิธีการเล่น</button>
                     <button onclick="location.reload()" style="background:#7f8c8d;">เริ่มเกมใหม่</button>
                 `;
-                buildQuestBoard(); // วาดกระดานใหม่
-            }, 1000);
+                        buildQuestBoard(); // วาดกระดานใหม่
+                    }, 1000);
+                }
+            }
+            // ฟังก์ชันหลอกให้เบราว์เซอร์ปลดล็อกระบบเสียงบนมือถือ
+            function unlockAudioOnMobile() {
+                if ('speechSynthesis' in window) {
+                    let dummy = new SpeechSynthesisUtterance("");
+                    dummy.volume = 0; // สั่งให้พูดแบบปิดเสียง
+                    window.speechSynthesis.speak(dummy);
+                }
+
+                // ถ้ามีเสียงเอฟเฟกต์ BGM ด้วย ให้ปลดล็อกแบบนี้คู่กัน
+                if (typeof bgm !== 'undefined') {
+                    bgm.play().then(() => { bgm.pause(); }).catch(e => { });
+                }
+            }
+
+            playNextVoice();
         }
-    }
-    
-    playNextVoice();
-}
-</script>
+    </script>
 
 </body>
+
 </html>
