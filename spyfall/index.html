@@ -94,6 +94,7 @@ function generateInputs() {
 }
 
 function startGame() {
+    unlockAudioOnMobile();
     let count = Math.max(3, parseInt(document.getElementById("playerCount").value) || 3);
     timeRemaining = parseInt(document.getElementById("gameTime").value) * 60; // แปลงนาทีเป็นวินาที
 
@@ -271,6 +272,19 @@ function revealAnswers() {
 
         <button class="action-btn" style="margin-top:30px;" onclick="location.reload()">เล่นรอบใหม่</button>
     `;
+}
+// ฟังก์ชันหลอกให้เบราว์เซอร์ปลดล็อกระบบเสียงบนมือถือ
+function unlockAudioOnMobile() {
+    if ('speechSynthesis' in window) {
+        let dummy = new SpeechSynthesisUtterance(""); 
+        dummy.volume = 0; // สั่งให้พูดแบบปิดเสียง
+        window.speechSynthesis.speak(dummy);
+    }
+    
+    // ถ้ามีเสียงเอฟเฟกต์ BGM ด้วย ให้ปลดล็อกแบบนี้คู่กัน
+    if (typeof bgm !== 'undefined') {
+        bgm.play().then(() => { bgm.pause(); }).catch(e => {});
+    }
 }
 </script>
 
