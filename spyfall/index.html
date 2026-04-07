@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🕵️‍♂️ Spyfall Ultimate</title>
+<style>
+    body { font-family: 'Arial', sans-serif; text-align: center; background:#111; color:white; margin: 0; padding: 20px; }
+    h1, h2, h3 { color: #f0f0f0; }
+    button { padding:12px 24px; margin:8px; font-size:18px; border-radius: 8px; border: none; background: #c0392b; color: white; cursor: pointer; transition: 0.3s; }
+    button:hover { background: #e74c3c; }
+    button.action-btn { background: #2980b9; }
+    button.action-btn:hover { background: #3498db; }
+    input[type="text"], input[type="number"], select { 
+        padding:10px; margin:5px; font-size: 16px; border-radius: 5px; border: none; text-align: center; width: 80%; max-width: 250px; 
+    }
+    .hidden { display:none !important; }
+    
+    #blindfold { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    
+    #timerDisplay { font-size: 64px; font-weight: bold; color: #f1c40f; margin: 15px 0; font-family: monospace; }
+    
+    /* สไตล์สำหรับกล่องรายชื่อสถานที่ */
+    .location-board { background: #222; border: 2px solid #444; border-radius: 10px; padding: 15px; margin: 20px auto; max-width: 400px; text-align: left; }
+    .location-board h3 { margin-top: 0; text-align: center; color: #3498db; }
+    .location-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .loc-item { background: #333; padding: 8px; border-radius: 5px; font-size: 14px; text-align: center; border: 1px solid #555;}
+</style>
+</head>
+
+<body>
+
+<h1>🕵️‍♂️ Spyfall Ultimate</h1>
+
+<div id="setup">
+    <h2>ตั้งค่าเกม</h2>
+    <p>จำนวนผู้เล่น (แนะนำ 4-8 คน):</p>
+    <input id="playerCount" type="number" value="4" min="3" oninput="generateInputs()"><br><br>
+    
+    <p>เวลาในการเล่น (นาที):</p>
+    <input id="gameTime" type="number" value="5" min="1" max="15"><br><br>
+
+    <div id="nameInputs"></div>
+
+    <button onclick="startGame()" style="background:#27ae60; margin-top: 20px;">เริ่มเกม</button>
+</div>
+
+<div id="game" class="hidden"></div>
+
+<div id="blindfold" class="hidden">
+    <h2 id="blindfoldText">ส่งมือถือให้ ...</h2>
+    <button onclick="revealRole()">ฉันคือคนนี้ (กดเพื่อดู)</button>
+</div>
+
+<script>
+// ================== เสียงพูด AI ==================
+function speak(text) {
+    if (!window.speechSynthesis) return;
+    let msg = new SpeechSynthesisUtterance(text);
+    msg.lang = "th-TH";
+    msg.pitch = 0.9;
+    msg.rate = 0.9;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(msg);
+}
+
+// ================== ข้อมูลเกม ==================
+const allLocations = [
+    "🏥 โรงพยาบาล", "🚀 สถานีอวกาศ", "🏴‍☠️ เรือโจรสลัด", "🏫 โรงเรียน", 
+    "🎰 คาสิโน", "🏖️ ชายหาด", "🎪 โรงละครสัตว์", "🪖 ฐานทัพทหาร", 
+    "🏦 ธนาคาร", "✈️ เครื่องบินโดยสาร", "🍽️ ร้านอาหารหรู", "🎬 กองถ่ายหนัง",
+    "🛳️ เรือสำราญ", "🚔 สถานีตำรวจ", "🛒 ซุปเปอร์มาร์เก็ต", "🏰 ปราสาทผีสิง"
+];
+
+let players = [];
+let currentPlayer = 0;
+let currentLocation = "";
+let timeRemaining = 0;
+let timerInterval = null;
+
+// ================== เริ่มเกม ==================
+window.onload = function() {
+    generateInputs();
+};
+
+function generateInputs() {
+    let countInput = document.getElementById("playerCount").value;
+    let count = Math.max(3, parseInt(countInput) || 3); // Spyfall เล่นขั้นต่ำ 3 คนสนุกกว่า
+    let html = "";
+    for(let i=0; i<count; i++) {
+        html += `<input type="text" id="name${i}" placeholder="ชื่อผู้เล่นคนที่ ${i+1}"><br>`;
+    }
+    document.getElementById("nameInputs").innerHTML = html;
+}
+
+function startGame() {
+    let count = Math.max(3, parseInt(document.getElementById("playerCount").value) || 3);
+    timeRemaining = parseInt(document.getElementById("gameTime").value) * 60; // แปลงนาทีเป็นวินาที
+
+    // 1. สุ่มสถานที่ 1 ที่สำหรับตานี้
+    currentLocation = allLocations[Math.floor(Math.random() * allLocations.length)];
+
+    // 2. สร้างอาร์เรย์ Role (มี Spy 1 คน ที่เหลือคือ Local)
+    let roles = ["spy"];
+    for (let i = 1; i < count; i++) {
+        roles.push("local");
+    }
+    roles = roles.sort(() => Math.random() - 0.5); // สลับตำแหน่ง
+
+    // 3. ดึงชื่อผู้เล่น
+    players = [];
+    for(let i=0; i<count; i++) {
+        let nameField = document.getElementById("name"+i).value;
+        let name = nameField ? nameField : ("Player "+(i+1));
+        players.push({ name: name, role: roles[i] });
+    }
+
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    currentPlayer = 0;
+    showRole();
+}
+
+// ================== หน้าจอส่งมือถือ ==================
+function showRole() {
+    if(currentPlayer >= players.length) {
+        startDiscussionPhase(); // เมื่อดูครบทุกคน ให้เริ่มจับเวลาคุย
+        return;
+    }
+    let p = players[currentPlayer];
+    document.getElementById("blindfold").classList.remove("hidden");
+    document.getElementById("blindfoldText").innerText = `ส่งมือถือให้ ${p.name}`;
+    document.getElementById("game").innerHTML = ""; 
+    speak("ส่งมือถือให้ " + p.name);
+}
+
+function revealRole() {
+    document.getElementById("blindfold").classList.add("hidden");
+    let p = players[currentPlayer];
+    
+    let roleHtml = "";
+    if (p.role === "spy") {
+        roleHtml = `
+            <h1 style="color:#e74c3c; font-size:40px;">🕵️‍♂️ คุณคือ SPY!</h1>
+            <p style="color:#f1c40f;">คุณไม่รู้ว่าตอนนี้อยู่ที่ไหน...<br>จงแฝงตัว เนียนตอบคำถาม และจับผิดให้ได้ว่าสถานที่คือที่ไหน!</p>
+        `;
+    } else {
+        roleHtml = `
+            <h2 style="color:#bdc3c7;">สถานที่ปัจจุบันคือ:</h2>
+            <h1 style="color:#2ecc71; font-size:40px;">📍 ${currentLocation}</h1>
+            <p>หาตัว Spy ให้เจอ อย่าให้ Spy รู้ว่าเราอยู่ที่ไหน</p>
+        `;
+    }
+
+    document.getElementById("game").innerHTML = `
+        <h2>ผู้เล่น: ${p.name}</h2>
+        ${roleHtml}
+        <br><br>
+        <button class="action-btn" onclick="nextPlayer()">จำได้แล้ว ซ่อนและส่งต่อ</button>
+    `;
+}
+
+function nextPlayer() {
+    document.getElementById("game").innerHTML = "";
+    currentPlayer++;
+    showRole();
+}
+
+// ================== จับเวลาพูดคุย ==================
+function formatTime(seconds) {
+    let m = Math.floor(seconds / 60);
+    let s = seconds % 60;
+    return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+}
+
+function startDiscussionPhase() {
+    speak("ทุกคนลืมตา... เริ่มจับเวลา");
+    renderGameScreen();
+    
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        document.getElementById("timerDisplay").innerText = formatTime(timeRemaining);
+        
+        if (timeRemaining <= 30 && timeRemaining > 0) {
+            document.getElementById("timerDisplay").style.color = "#e74c3c"; // แดงเตือน
+        }
+        
+        if (timeRemaining <= 0) {
+            clearInterval(timerInterval);
+            timeUp();
+        }
+    }, 1000);
+}
+
+// สร้างตารางสถานที่ทั้งหมดเพื่อให้ Spy ดู
+function getLocationGridHTML() {
+    let gridHtml = '<div class="location-board"><h3>📋 รายชื่อสถานที่ทั้งหมด</h3><div class="location-grid">';
+    allLocations.forEach(loc => {
+        gridHtml += `<div class="loc-item">${loc}</div>`;
+    });
+    gridHtml += '</div></div>';
+    return gridHtml;
+}
+
+function renderGameScreen() {
+    document.getElementById("game").innerHTML = `
+        <h2>🗣️ ช่วงจับโกหก (สลับกันถาม-ตอบ)</h2>
+        <div id="timerDisplay">${formatTime(timeRemaining)}</div>
+        
+        <button class="action-btn" style="background:#8e44ad;" onclick="showLocations()">ดูรายชื่อสถานที่ (สำหรับ Spy)</button><br>
+        <button style="background:#c0392b;" onclick="endGameVote()">หยุดเวลา & โหวตจับ Spy</button>
+        <button style="background:#e67e22;" onclick="spyGuess()">Spy ขอเดาสถานที่!</button>
+        
+        <div id="locationListArea" class="hidden">
+            ${getLocationGridHTML()}
+            <button class="action-btn" onclick="hideLocations()">ซ่อนรายชื่อ</button>
+        </div>
+    `;
+}
+
+function showLocations() {
+    document.getElementById("locationListArea").classList.remove("hidden");
+}
+function hideLocations() {
+    document.getElementById("locationListArea").classList.add("hidden");
+}
+
+// ================== จบเกม ==================
+function timeUp() {
+    speak("หมดเวลา! โหวตจับสปายได้เลย");
+    document.getElementById("game").innerHTML = `
+        <h1 style="color:#e74c3c;">⏰ หมดเวลา!</h1>
+        <p>ทุกคนต้องชี้ตัวพร้อมกันว่าใครคือ Spy!</p>
+        <button class="action-btn" onclick="revealAnswers()">ดูเฉลย</button>
+    `;
+}
+
+function endGameVote() {
+    clearInterval(timerInterval);
+    document.getElementById("game").innerHTML = `
+        <h1>🗳️ โหวตจับ Spy</h1>
+        <p>ทุกคนต้องชี้ตัวพร้อมกันว่าใครคือ Spy!</p>
+        <button class="action-btn" onclick="revealAnswers()">โหวตเสร็จแล้ว ดูเฉลย</button>
+    `;
+}
+
+function spyGuess() {
+    clearInterval(timerInterval);
+    speak("สปายหยุดเวลา... สปายคิดว่าสถานที่นี้คือที่ไหน");
+    document.getElementById("game").innerHTML = `
+        <h1 style="color:#e67e22;">🕵️‍♂️ Spy ขอเดาสถานที่!</h1>
+        <p>Spy ต้องบอกสถานที่ออกมาดังๆ ถ้าทายถูก Spy จะชนะทันที!</p>
+        <button class="action-btn" onclick="revealAnswers()">ดูเฉลยสถานที่จริง</button>
+    `;
+}
+
+function revealAnswers() {
+    let spyPlayer = players.find(p => p.role === "spy");
+
+    document.getElementById("game").innerHTML = `
+        <h1>เปิดเผยความจริง!</h1>
+        <h2 style="color:#e74c3c;">🕵️‍♂️ Spy คือ: ${spyPlayer.name}</h2>
+        <h2 style="color:#2ecc71;">📍 สถานที่จริงคือ: ${currentLocation}</h2>
+        
+        <div style="margin-top: 30px;">
+            <h3>สรุปผลการแข่งขัน</h3>
+            <p style="color:#ccc;">- ถ้าชาวบ้านโหวตจับ Spy ถูก = <b>ชาวบ้านชนะ</b></p>
+            <p style="color:#ccc;">- ถ้าชาวบ้านโหวตผิด / Spy ทายสถานที่ถูก = <b>Spy ชนะ</b></p>
+        </div>
+
+        <button class="action-btn" style="margin-top:30px;" onclick="location.reload()">เล่นรอบใหม่</button>
+    `;
+}
+</script>
+
+</body>
+</html>

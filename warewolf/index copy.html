@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Werewolf Ultimate</title>
+<style>
+body { font-family: Arial; text-align: center; background:#111; color:white; }
+button { padding:10px 20px; margin:5px; font-size:18px; }
+input { padding:8px; margin:5px; }
+.hidden { display:none; }
+</style>
+</head>
+
+<body>
+
+<h1>🐺 Werewolf Ultimate</h1>
+
+<div id="setup">
+<h2>ตั้งค่าเกม</h2>
+
+จำนวนผู้เล่น:
+<input id="playerCount" type="number" value="4" min="4"><br>
+
+เลือกเสียง:
+<select id="voiceSelect">
+  <option value="female">ผู้หญิง</option>
+  <option value="male">ผู้ชาย</option>
+</select>
+
+<br><br>
+<div id="nameInputs"></div>
+
+<button onclick="generateInputs()">ใส่ชื่อผู้เล่น</button>
+<button onclick="startGame()">เริ่มเกม</button>
+</div>
+
+<div id="game" class="hidden"></div>
+
+<script>
+// ================== เสียงพูด ==================
+let selectedVoice = null;
+
+function loadVoices() {
+    let voices = speechSynthesis.getVoices();
+    let type = document.getElementById("voiceSelect").value;
+
+    selectedVoice = voices.find(v =>
+        type === "female" ? v.name.toLowerCase().includes("female") : v.name.toLowerCase().includes("male")
+    ) || voices[0];
+}
+
+function speak(text) {
+    let msg = new SpeechSynthesisUtterance(text);
+    msg.lang = "th-TH";
+    msg.voice = selectedVoice;
+    msg.pitch = 0.8;
+    msg.rate = 0.9;
+
+    speechSynthesis.cancel();
+    speechSynthesis.speak(msg);
+}
+
+// ================== เสียงเอฟเฟกต์ ==================
+function wolfSound() {
+    let audio = new Audio("https://www.fesliyanstudios.com/play-mp3/4386");
+    audio.play();
+}
+
+function scarySound() {
+    let audio = new Audio("https://www.fesliyanstudios.com/play-mp3/387");
+    audio.play();
+}
+
+// ================== AI STORY ==================
+function fakeAI(type) {
+    const texts = {
+        night: [
+            "ค่ำคืนที่เงียบงันกำลังเริ่มต้น...",
+            "เสียงลมพัด... และบางสิ่งกำลังเคลื่อนไหว...",
+            "ความมืดปกคลุมหมู่บ้าน..."
+        ],
+        vote: [
+            "ความสงสัยกำลังเพิ่มขึ้น...",
+            "ทุกคนเริ่มไม่ไว้ใจกัน...",
+            "ใครคือหมาป่าที่แท้จริง..."
+        ]
+    };
+    let arr = texts[type];
+    return arr[Math.floor(Math.random()*arr.length)];
+}
+
+// ================== ROLE DETAIL ==================
+function roleDetail(role){
+    if(role=="wolf") return "🐺 หมาป่า: เลือกฆ่าคนในตอนกลางคืน";
+    if(role=="seer") return "🔮 Seer: ดู role คนอื่นได้";
+    if(role=="doctor") return "💊 Doctor: เลือกช่วยคน";
+    return "👨‍🌾 ชาวบ้าน: หาหมาป่า";
+}
+
+// ================== GAME ==================
+let players = [];
+let roles = [];
+let currentPlayer = 0;
+let killTarget = null;
+let saveTarget = null;
+
+function generateInputs(){
+    let count = playerCount.value;
+    let html="";
+    for(let i=0;i<count;i++){
+        html += `<input id="name${i}" placeholder="ชื่อผู้เล่น ${i+1}"><br>`;
+    }
+    nameInputs.innerHTML = html;
+}
+
+function shuffle(array){
+    return array.sort(()=>Math.random()-0.5);
+}
+
+function startGame(){
+    loadVoices();
+
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    let count = parseInt(playerCount.value);
+
+    roles = ["wolf","seer","doctor"];
+    while(roles.length<count) roles.push("villager");
+    roles = shuffle(roles);
+
+    players = [];
+    for(let i=0;i<count;i++){
+        let name = document.getElementById("name"+i).value || ("Player "+(i+1));
+        players.push({
+            name:name,
+            role:roles[i],
+            alive:true
+        });
+    }
+
+    currentPlayer = 0;
+    showRole();
+}
+
+// ================== แจก Role ==================
+function showRole(){
+    if(currentPlayer>=players.length){
+        startNight();
+        return;
+    }
+
+    let p = players[currentPlayer];
+
+    game.innerHTML = `
+        <h2>ส่งมือถือให้ ${p.name}</h2>
+        <button onclick="revealRole()">ดู Role</button>
+    `;
+}
+
+function revealRole(){
+    let p = players[currentPlayer];
+
+    // ❌ ไม่มีเสียง (กันโกง)
+
+    game.innerHTML = `
+        <h2>${p.name}</h2>
+        <h1>${p.role.toUpperCase()}</h1>
+        <p>${roleDetail(p.role)}</p>
+        <button onclick="nextPlayer()">ซ่อนแล้วส่งต่อ</button>
+    `;
+}
+
+function nextPlayer(){
+    currentPlayer++;
+    showRole();
+}
+
+// ================== NIGHT ==================
+function startNight(){
+    killTarget=null;
+    saveTarget=null;
+
+    let text = fakeAI("night");
+    speak(text);
+    scarySound();
+
+    game.innerHTML = `
+        <h2>🌙 กลางคืน</h2>
+        <p>${text}</p>
+        <button onclick="wolfTurn()">เริ่ม</button>
+    `;
+}
+
+function wolfTurn(){
+    wolfSound();
+
+    let options = players.map((p,i)=> p.alive? `<button onclick="kill(${i})">${p.name}</button>`:"").join("");
+
+    speak("หมาป่าเลือกเหยื่อ");
+
+    game.innerHTML = `
+        <h2>🐺 Werewolf</h2>
+        ${options}
+    `;
+}
+
+function kill(i){
+    killTarget=i;
+    seerTurn();
+}
+
+function seerTurn(){
+    let options = players.map((p,i)=> `<button onclick="see(${i})">${p.name}</button>`).join("");
+
+    speak("ผู้หยั่งรู้เลือกดู");
+
+    game.innerHTML = `
+        <h2>🔮 Seer</h2>
+        ${options}
+    `;
+}
+
+function see(i){
+    alert(players[i].name+" คือ "+players[i].role);
+    doctorTurn();
+}
+
+function doctorTurn(){
+    let options = players.map((p,i)=> `<button onclick="save(${i})">${p.name}</button>`).join("");
+
+    speak("หมอเลือกช่วย");
+
+    game.innerHTML = `
+        <h2>💊 Doctor</h2>
+        ${options}
+    `;
+}
+
+function save(i){
+    saveTarget=i;
+    startDay();
+}
+
+// ================== DAY ==================
+function startDay(){
+    let dead="ไม่มีใครตาย";
+
+    if(killTarget!==saveTarget){
+        players[killTarget].alive=false;
+        dead=players[killTarget].name;
+    }
+
+    speak("เช้าวันใหม่");
+    scarySound();
+
+    game.innerHTML = `
+        <h2>🌞 กลางวัน</h2>
+        <h3>ตาย: ${dead}</h3>
+        <button onclick="votePhase()">โหวต</button>
+    `;
+}
+
+// ================== VOTE ==================
+function votePhase(){
+    let options = players.map((p,i)=> p.alive? `<button onclick="vote(${i})">${p.name}</button>`:"").join("");
+
+    let text=fakeAI("vote");
+    speak(text);
+
+    game.innerHTML = `
+        <h2>🗳️ โหวต</h2>
+        <p>${text}</p>
+        ${options}
+    `;
+}
+
+function vote(i){
+    players[i].alive=false;
+
+    speak(players[i].name+" ถูกโหวตออก");
+
+    game.innerHTML = `
+        <h2>ผลโหวต</h2>
+        <button onclick="checkWin()">ไปต่อ</button>
+    `;
+}
+
+// ================== CHECK WIN ==================
+function checkWin(){
+    let wolves = players.filter(p=>p.role=="wolf" && p.alive).length;
+    let villagers = players.filter(p=>p.role!="wolf" && p.alive).length;
+
+    if(wolves==0){
+        speak("ชาวบ้านชนะ");
+        game.innerHTML="<h1>🎉 Villagers ชนะ!</h1>";
+        return;
+    }
+
+    if(wolves>=villagers){
+        speak("หมาป่าชนะ");
+        game.innerHTML="<h1>🐺 Werewolf ชนะ!</h1>";
+        return;
+    }
+
+    startNight();
+}
+</script>
+
+</body>
+</html>

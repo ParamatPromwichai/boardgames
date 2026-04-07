@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🍻 Ohana Card Game</title>
+<style>
+    body { 
+        font-family: 'Arial', sans-serif; 
+        background: #1a1a2e; 
+        color: white; 
+        text-align: center; 
+        margin: 0; 
+        padding: 20px; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+    }
+    h1 { color: #f1c40f; font-size: 36px; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+    p.subtitle { color: #bdc3c7; margin-top: 0; margin-bottom: 30px; }
+    
+    /* สไตล์ของไพ่ */
+    .card-container {
+        width: 260px;
+        height: 380px;
+        perspective: 1000px;
+        margin-bottom: 30px;
+    }
+    
+    .card {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        border-radius: 15px;
+        cursor: pointer;
+    }
+    
+    .card.flipped { transform: rotateY(180deg); }
+    
+    .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 8px solid white;
+        background-color: white;
+        box-sizing: border-box;
+    }
+    
+    /* หลังไพ่ */
+    .card-back {
+        background: linear-gradient(135deg, #c0392b, #8e44ad);
+        color: white;
+        transform: rotateY(0deg);
+    }
+    .card-back::after {
+        content: "OHANA";
+        font-size: 40px;
+        font-weight: bold;
+        letter-spacing: 2px;
+        text-shadow: 2px 2px 0 #000;
+        border: 4px dashed rgba(255,255,255,0.5);
+        padding: 20px;
+        border-radius: 50%;
+    }
+    
+    /* หน้าไพ่ */
+    .card-front {
+        background: #fff;
+        transform: rotateY(180deg);
+        position: relative;
+    }
+    
+    .suit { font-size: 60px; }
+    .val { font-size: 80px; font-weight: bold; line-height: 1; }
+    
+    .red { color: #e74c3c; }
+    .black { color: #2c3e50; }
+
+    .corner { position: absolute; font-size: 24px; font-weight: bold; text-align: center; line-height: 1.1; }
+    .corner.top-left { top: 10px; left: 10px; }
+    .corner.bottom-right { bottom: 10px; right: 10px; transform: rotate(180deg); }
+    
+    /* กล่องแสดงกติกา */
+    .rule-box {
+        background: rgba(0, 0, 0, 0.6);
+        border: 2px solid #f1c40f;
+        border-radius: 10px;
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+        min-height: 100px;
+        margin-bottom: 20px;
+    }
+    .rule-title { font-size: 28px; font-weight: bold; color: #f1c40f; margin-bottom: 10px; }
+    .rule-detail { font-size: 18px; color: #fff; line-height: 1.5; }
+
+    button { 
+        padding: 15px 40px; 
+        font-size: 24px; 
+        font-weight: bold;
+        border-radius: 50px; 
+        border: none; 
+        background: linear-gradient(to right, #f1c40f, #f39c12); 
+        color: #111; 
+        cursor: pointer; 
+        transition: 0.2s;
+        box-shadow: 0 5px 15px rgba(241, 196, 15, 0.4);
+    }
+    button:hover { transform: scale(1.05); }
+    button:active { transform: scale(0.95); }
+
+    .cards-left { margin-top: 15px; color: #7f8c8d; font-size: 14px; }
+</style>
+</head>
+<body>
+
+    <h1>🍻 OHANA CARD</h1>
+    <p class="subtitle">เกมไพ่ปาร์ตี้วงเหล้า สุ่มแล้วทำตามคำสั่ง!</p>
+
+    <div class="card-container" onclick="drawCard()">
+        <div class="card" id="playingCard">
+            <div class="card-face card-back"></div>
+            <div class="card-face card-front" id="cardFront">
+                <div class="corner top-left"><span id="tl-val"></span><br><span id="tl-suit"></span></div>
+                <div class="center-content">
+                    <div class="val" id="c-val"></div>
+                    <div class="suit" id="c-suit"></div>
+                </div>
+                <div class="corner bottom-right"><span id="br-val"></span><br><span id="br-suit"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rule-box">
+        <div class="rule-title" id="ruleTitle">กดปุ่มเพื่อจั่วไพ่</div>
+        <div class="rule-detail" id="ruleDetail">พร้อมแล้วก็เริ่มกันเลย!</div>
+    </div>
+
+    <button onclick="drawCard()">🃏 จั่วไพ่</button>
+    <div class="cards-left" id="cardsLeft">ไพ่ในกอง: 56 ใบ</div>
+
+<script>
+// ================= ข้อมูลกติกา Ohana =================
+const rules = {
+    '0': { title: '🎉 รอดตัว!', detail: 'ถือว่าโชคดีไป! ไม่ต้องโดนทำโทษใดๆ ทั้งสิ้นในตานี้' },
+    '1': { title: '😭 โดนคนเดียว!', detail: 'รับกรรมไปเต็มๆ คนจั่วโดนทำโทษ (ดื่ม) คนเดียว' },
+    '2': { title: '👯 หาเพื่อน 1 คน!', detail: 'เลือกเพื่อน 1 คนมารับบทลงโทษเป็นเพื่อนคุณ (ชนแก้วคู่)' },
+    '3': { title: '👨‍👩‍👦 หาเพื่อน 2 คน!', detail: 'ลากเพื่อนมารับกรรมด้วยกัน 2 คน (ชนแก้ว 3 คน)' },
+    '4': { title: '👈 ซ้ายรับกรรม!', detail: 'คนที่นั่งทาง "ซ้ายมือ" ของคนจั่วโดนทำโทษ' },
+    '5': { title: '🍻 ห้าเฮฮา!', detail: 'ทุกคนชนแก้ว!! โดนทำโทษ "ทุกคน" ในวง' },
+    '6': { title: '👉 ขวารับกรรม!', detail: 'คนที่นั่งทาง "ขวามือ" ของคนจั่วโดนทำโทษ' },
+    '7': { title: '🫁 ดวลปอด!', detail: 'เลือกคู่ประลอง 1 คน แข่งลากเสียงยาว (เช่น อาาาาา) ใครเสียงหมดก่อนโดน!' },
+    '8': { title: '🚽 พักยก!', detail: 'ปวดฉี่ไปเข้าห้องน้ำได้! ทุกคนพักผ่อนได้ตามอัธยาศัย' },
+    '9': { title: '🎮 มินิเกม!', detail: 'คนจั่วคิดมินิเกมมา 1 อย่าง (เช่น ต่อคำ, ทายใจ) ใครแพ้เกมนี้โดน' },
+    '10': { title: '👻 เลอะเทอะ!', detail: 'เตรียมแป้งมาโปะหน้าคนจั่วได้เลย (หรือลงโทษแบบอื่นที่ตกลงกัน)' },
+    'J': { title: '👤 แจ็คจับหน้า!', detail: 'เก็บไพ่ไว้ใช้ตอนไหนก็ได้! ให้เนียนเอามือจับหน้าตัวเอง ใครจับตามคนสุดท้าย... โดน!' },
+    'Q': { title: '👸 แหม่มเพื่อนไม่คบ!', detail: 'เอาไพ่ตั้งไว้หน้าตัวเอง ห้ามใครคุยหรือตอบคำถามคนจั่วเด็ดขาด ใครเผลอพูดด้วย... โดน!' },
+    'K': { title: '👑 ราชาตั้งกฎ!', detail: 'ตั้งกฎอะไรก็ได้ 1 ข้อ (เช่น ห้ามพูดคำหยาบ, ห้ามชี้หน้า) ใครฝ่าฝืนโดน! กฎมีผลจนกว่าจะมีคนจั่วได้ K ใบใหม่' }
+};
+
+// ================= ระบบไพ่ =================
+const suits = [
+    { symbol: '♠', color: 'black' }, 
+    { symbol: '♥', color: 'red' }, 
+    { symbol: '♦', color: 'red' }, 
+    { symbol: '♣', color: 'black' }
+];
+const values = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+let deck = [];
+
+// สร้างกองไพ่ใหม่ (4 ดอก x 14 ใบ = 56 ใบ)
+function createDeck() {
+    deck = [];
+    for (let s of suits) {
+        for (let v of values) {
+            deck.push({ suit: s.symbol, color: s.color, value: v });
+        }
+    }
+    // สับไพ่
+    deck = deck.sort(() => Math.random() - 0.5);
+    updateCardsLeft();
+}
+
+function updateCardsLeft() {
+    document.getElementById('cardsLeft').innerText = `ไพ่ในกอง: ${deck.length} ใบ`;
+}
+
+// ================= ระบบอ่านเสียง AI =================
+function speak(title, detail) {
+    if (!window.speechSynthesis) return;
+    speechSynthesis.cancel(); // หยุดเสียงเก่าก่อน
+    
+    // กรองอีโมจิออกก่อนอ่าน เพื่อไม่ให้ AI อ่านชื่ออีโมจิ
+    let cleanTitle = title.replace(/[\u1000-\uFFFF]/g, ''); 
+    let msg = new SpeechSynthesisUtterance(cleanTitle + " ... " + detail);
+    msg.lang = "th-TH";
+    msg.pitch = 1.0;
+    msg.rate = 0.95;
+    speechSynthesis.speak(msg);
+}
+
+// ================= ฟังก์ชันจั่วไพ่ =================
+let isFlipped = false;
+
+function drawCard() {
+    let cardEl = document.getElementById('playingCard');
+    let titleEl = document.getElementById('ruleTitle');
+    let detailEl = document.getElementById('ruleDetail');
+
+    // ถ้าไพ่หมดกอง ให้สร้างใหม่
+    if (deck.length === 0) {
+        alert("ไพ่หมดกองแล้ว! สับไพ่ใหม่...");
+        createDeck();
+    }
+
+    // เอาไพ่ใบบนสุดออกมา
+    let card = deck.pop();
+    updateCardsLeft();
+
+    // เอฟเฟกต์พลิกไพ่
+    if (isFlipped) {
+        // คว่ำไพ่ก่อนแปบนึง แล้วค่อยหงาย
+        cardEl.classList.remove('flipped');
+        setTimeout(() => showCardData(card), 300);
+    } else {
+        showCardData(card);
+    }
+}
+
+function showCardData(card) {
+    let cardEl = document.getElementById('playingCard');
+    let cardFront = document.getElementById('cardFront');
+    
+    // ตั้งค่าสี
+    cardFront.className = 'card-face card-front ' + card.color;
+    
+    // อัปเดตหน้าไพ่
+    document.getElementById('tl-val').innerText = card.value;
+    document.getElementById('tl-suit').innerText = card.suit;
+    document.getElementById('c-val').innerText = card.value;
+    document.getElementById('c-suit').innerText = card.suit;
+    document.getElementById('br-val').innerText = card.value;
+    document.getElementById('br-suit').innerText = card.suit;
+
+    // อัปเดตกติกา
+    let rule = rules[card.value];
+    document.getElementById('ruleTitle').innerText = `ไพ่ ${card.value} : ${rule.title}`;
+    document.getElementById('ruleDetail').innerText = rule.detail;
+
+    // พลิกไพ่โชว์
+    cardEl.classList.add('flipped');
+    isFlipped = true;
+
+    // AI อ่านกติกา
+    speak(rule.title, rule.detail);
+}
+
+// เริ่มต้นสร้างกองไพ่เมื่อเปิดหน้าเว็บ
+window.onload = createDeck;
+
+</script>
+</body>
+</html>

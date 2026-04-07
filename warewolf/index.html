@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Werewolf Ultimate</title>
+<style>
+    body { font-family: 'Arial', sans-serif; text-align: center; background:#111; color:white; margin: 0; padding: 20px; }
+    h1, h2, h3 { color: #f0f0f0; }
+    button { padding:12px 24px; margin:8px; font-size:18px; border-radius: 8px; border: none; background: #c0392b; color: white; cursor: pointer; transition: 0.3s; }
+    button:hover { background: #e74c3c; }
+    button.action-btn { background: #2980b9; }
+    input[type="text"], input[type="number"], select { 
+        padding:10px; margin:5px; font-size: 16px; border-radius: 5px; border: none; text-align: center; width: 80%; max-width: 250px; 
+    }
+    .hidden { display:none !important; }
+    
+    #blindfold { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    
+    #timerDisplay, #nightTimerDisplay { font-size: 56px; font-weight: bold; color: #f1c40f; margin: 15px 0; font-family: monospace; }
+</style>
+</head>
+
+<body>
+
+<h1>🐺 Werewolf Ultimate</h1>
+
+<div id="setup">
+    <h2>ตั้งค่าเกม</h2>
+    <p>จำนวนผู้เล่น (เล่นได้ตั้งแต่ 4 คนขึ้นไป):</p>
+    <input id="playerCount" type="number" value="4" min="4" oninput="generateInputs()"><br><br>
+
+
+    <br><br>
+    <div id="nameInputs"></div>
+
+    <button onclick="startGame()" style="background:#27ae60; margin-top: 20px;">เริ่มเกม</button>
+    <button onclick="window.location.href='card.html'">ดูรายละเอียดบทบาท</button>
+</div>
+
+<div id="game" class="hidden"></div>
+
+<div id="blindfold" class="hidden">
+    <h2 id="blindfoldText">ส่งมือถือให้ ...</h2>
+    <button onclick="revealRole()">ฉันคือคนนี้ (ดู Role)</button>
+</div>
+
+<script>
+let selectedVoice = null;
+
+
+window.onload = function() {
+    generateInputs();
+};
+
+function loadVoices() {
+    if (!window.speechSynthesis) return;
+    let voices = speechSynthesis.getVoices();
+    let type = document.getElementById("voiceSelect").value;
+    selectedVoice = voices.find(v =>
+        type === "female" ? v.name.toLowerCase().includes("female") : v.name.toLowerCase().includes("male")
+    ) || voices[0];
+}
+
+function speak(text) {
+    if (!window.speechSynthesis) return;
+    let msg = new SpeechSynthesisUtterance(text);
+    msg.lang = "th-TH";
+    if (selectedVoice) msg.voice = selectedVoice;
+    msg.pitch = 0.8;
+    msg.rate = 0.9;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(msg);
+}
+
+// ตัวแปรข้อมูลเกม
+let players = [];
+let roles = [];
+let currentPlayer = 0;
+let killTargets = []; // หมาป่าอาจจะฆ่า 1 หรือ 2 คน
+let saveTarget = null;
+let deadThisRound = [];
+let timeRemaining = 0;
+let timerInterval = null;
+
+// กลไกสำหรับลูกหมาป่า
+let wolfKillsNextNight = 1; // จำนวนโควต้าฆ่าของหมาป่าในคืนนี้
+let currentWolfKills = 1;
+
+// ตัวแปรสำหรับจับเวลาในตอนกลางคืนแบบสุ่ม (10-15 วิ)
+let nightTimerInterval = null;
+let nightTimeRemaining = 0;
+let selectedNightTarget = null;
+
+function roleDetail(role) {
+    if(role=="wolf") return "🐺 หมาป่า: เลือกฆ่าคนในตอนกลางคืน";
+    if(role=="wolfcub") return "🐺 ลูกหมาป่า: อยู่ฝั่งหมาป่า (หากคุณตาย คืนถัดไปหมาป่าจะฆ่าได้ 2 คน)";
+    if(role=="seer") return "🔮 Seer: แอบดูบทบาทของคนอื่นได้คืนละ 1 คน";
+    if(role=="doctor") return "💊 Doctor: เลือกช่วยชีวิตคนได้คืนละ 1 คน";
+    if(role=="hunter") return "🔫 Hunter: หากคุณตาย คุณสามารถยิงใครก็ได้ตายตามไป 1 คน";
+    return "👨‍🌾 ชาวบ้าน: จับผิดหมาป่า และโหวตออกในตอนกลางวัน";
+}
+
+function roleDetailShort(role) {
+    if(role=="wolf") return "🐺 หมาป่า";
+    if(role=="wolfcub") return "🐺 ลูกหมาป่า";
+    if(role=="seer") return "🔮 Seer";
+    if(role=="doctor") return "💊 Doctor";
+    if(role=="hunter") return "🔫 Hunter";
+    return "👨‍🌾 ชาวบ้าน";
+}
+
+function generateInputs() {
+    let countInput = document.getElementById("playerCount").value;
+    let count = Math.max(4, parseInt(countInput) || 4);
+    let html = "";
+    for(let i=0; i<count; i++) {
+        html += `<input type="text" id="name${i}" placeholder="ชื่อผู้เล่นคนที่ ${i+1}"><br>`;
+    }
+    document.getElementById("nameInputs").innerHTML = html;
+}
+
+function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+
+function startGame() {
+    loadVoices();
+    document.getElementById("setup").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    let count = Math.max(4, parseInt(document.getElementById("playerCount").value) || 4);
+
+    roles = ["wolf", "seer", "doctor"];
+    if (count >= 5) roles.push("hunter");
+    if (count >= 6) roles.push("wolfcub"); // แทนที่แม่มดด้วยลูกหมาป่า
+    while(roles.length < count) roles.push("villager");
+    roles = shuffle(roles);
+
+    players = [];
+    for(let i=0; i<count; i++) {
+        let nameField = document.getElementById("name"+i).value;
+        let name = nameField ? nameField : ("Player "+(i+1));
+        players.push({ name: name, role: roles[i], alive: true });
+    }
+
+    currentPlayer = 0;
+    wolfKillsNextNight = 1; // รีเซ็ตโควต้าฆ่าตอนเริ่มเกมใหม่
+    showRole();
+}
+
+function showRole() {
+    if(currentPlayer >= players.length) {
+        if (players.length >= 5) {
+            firstDayIntro(); 
+        } else {
+            startNight(); 
+        }
+        return;
+    }
+    let p = players[currentPlayer];
+    document.getElementById("blindfold").classList.remove("hidden");
+    document.getElementById("blindfoldText").innerText = `ส่งมือถือให้ ${p.name}`;
+    document.getElementById("game").innerHTML = ""; 
+}
+
+function revealRole() {
+    document.getElementById("blindfold").classList.add("hidden");
+    let p = players[currentPlayer];
+    document.getElementById("game").innerHTML = `
+        <h2>ผู้เล่น: ${p.name}</h2>
+        <h1 style="color:#e74c3c;">${p.role.toUpperCase()}</h1>
+        <p>${roleDetail(p.role)}</p>
+        <button class="action-btn" onclick="nextPlayer()">จำได้แล้ว ซ่อนและส่งต่อ</button>
+    `;
+}
+
+function nextPlayer() {
+    document.getElementById("game").innerHTML = "";
+    currentPlayer++;
+    showRole();
+}
+
+function formatTime(seconds) {
+    let m = Math.floor(seconds / 60);
+    let s = seconds % 60;
+    return (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+}
+
+// ================= เช้าวันแรก (Day 1) =================
+function firstDayIntro() {
+    timeRemaining = 300; 
+    speak("ทุกคนลืมตา... นี่คือเช้าวันแรกของหมู่บ้าน ให้เวลาทุกคนแนะนำตัวก่อนที่จะเข้าสู่คืนแรก");
+    
+    document.getElementById("game").innerHTML = `
+        <h2>🌞 เช้าแนะนำตัว (Day 1)</h2>
+        <p>พูดคุยทำความรู้จักกัน (ยังไม่มีการโหวตในรอบนี้)</p>
+        <div id="timerDisplay">${formatTime(timeRemaining)}</div>
+        <button class="action-btn" onclick="skipIntroTimer()">คุยเสร็จแล้ว เข้าสู่คืนแรก</button>
+    `;
+    
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        document.getElementById("timerDisplay").innerText = formatTime(timeRemaining);
+        if (timeRemaining <= 30 && timeRemaining > 0) {
+            document.getElementById("timerDisplay").style.color = "#e74c3c"; 
+        }
+        if (timeRemaining <= 0) skipIntroTimer();
+    }, 1000);
+}
+
+function skipIntroTimer() {
+    clearInterval(timerInterval);
+    startNight();
+}
+
+// ================= ระบบจับเวลาตอนกลางคืน =================
+function startNightTimer(onFinish) {
+    if (nightTimerInterval) clearInterval(nightTimerInterval);
+    nightTimerInterval = setInterval(() => {
+        nightTimeRemaining--;
+        let timerEl = document.getElementById("nightTimerDisplay");
+        if (timerEl) timerEl.innerText = nightTimeRemaining;
+        
+        if (nightTimeRemaining <= 0) {
+            clearInterval(nightTimerInterval);
+            onFinish();
+        }
+    }, 1000);
+}
+
+function selectNightTarget(index, roleType) {
+    selectedNightTarget = index;
+    let resultDiv = document.getElementById("nightResult");
+    let optionsDiv = document.getElementById("nightOptions");
+    
+    if (index === null) {
+         resultDiv.innerHTML = "คุณเลือก: ข้าม (ไม่ใช้พลัง)<br><span style='font-size:16px; color:#bdc3c7;'>(รอเวลาหมด...)</span>";
+         optionsDiv.innerHTML = "";
+         return;
+    }
+
+    let targetName = players[index].name;
+
+    if (roleType === 'seer') {
+        let targetRole = players[index].role;
+        resultDiv.innerHTML = `${targetName} คือ <span style="color:#f1c40f; font-size:24px;">${roleDetailShort(targetRole)}</span><br><span style='font-size:16px; color:#bdc3c7;'>(รอเวลาหมด...)</span>`;
+        optionsDiv.innerHTML = ""; 
+    } else if (roleType === 'doctor') {
+        resultDiv.innerHTML = `คุณเลือกเป้าหมาย: ${targetName}<br><span style='font-size:16px; color:#bdc3c7;'>(รอเวลาหมด...)</span>`;
+        optionsDiv.innerHTML = ""; 
+    }
+}
+
+// ฟังก์ชันเฉพาะสำหรับหมาป่าเพราะอาจจะเลือก 2 คน
+function selectWolfTarget(index) {
+    let resultDiv = document.getElementById("nightResult");
+    let optionsDiv = document.getElementById("nightOptions");
+
+    if (index === null) {
+        killTargets = []; 
+        optionsDiv.innerHTML = "";
+        resultDiv.innerHTML = "คุณเลือก: ข้าม (ไม่ฆ่าใคร)<br><span style='font-size:16px; color:#bdc3c7;'>(รอเวลาหมด...)</span>";
+        return;
+    }
+
+    // ถ้ายังเลือกไม่ครบ และยังไม่ได้เลือกคนเดิม
+    if (!killTargets.includes(index) && killTargets.length < currentWolfKills) {
+        killTargets.push(index);
+        document.getElementById(`wolf-btn-${index}`).style.background = "#e74c3c"; // เปลี่ยนสีปุ่มที่ถูกเลือก
+    }
+
+    if (killTargets.length === currentWolfKills) {
+        let targetNames = killTargets.map(i => players[i].name).join(" และ ");
+        optionsDiv.innerHTML = "";
+        resultDiv.innerHTML = `เป้าหมายคืนนี้: ${targetNames}<br><span style='font-size:16px; color:#bdc3c7;'>(รอเวลาหมด...)</span>`;
+    } else {
+        let targetNames = killTargets.map(i => players[i].name).join(" และ ");
+        resultDiv.innerHTML = `เลือกแล้ว: ${targetNames} (โปรดเลือกอีก ${currentWolfKills - killTargets.length} คน)`;
+    }
+}
+
+// ================= NIGHT PHASE (เริ่มกลางคืน) =================
+function startNight() {
+    killTargets = []; saveTarget = null; deadThisRound = [];
+    
+    speak("ทุกคนหลับตา... ค่ำคืนที่เงียบงันกำลังเริ่มต้น");
+    
+    document.getElementById("game").innerHTML = `
+        <h2>🌙 กลางคืน</h2>
+        <p>ทุกคนกำลังหลับตา...</p>
+        <button class="action-btn" onclick="wolfTurn()">เริ่มเรียกบทบาท</button>
+    `;
+}
+
+// --- หมาป่า ---
+function wolfTurn() {
+    nightTimeRemaining = Math.floor(Math.random() * 6) + 10; 
+    
+    currentWolfKills = wolfKillsNextNight; // โหลดโควต้าว่าคืนนี้ฆ่าได้กี่คน
+    wolfKillsNextNight = 1; // รีเซ็ตโควต้าคืนถัดไปกลับเป็น 1 ทันที
+
+    killTargets = []; // ล้างเป้าหมาย
+    
+    let voiceText = "หมาป่าลืมตา... และเลือกเหยื่อของคุณ";
+    let extraText = "";
+
+    if (currentWolfKills === 2) {
+        voiceText = "หมาป่าลืมตา... และเลือกเหยื่อของคุณ";
+        extraText = "<br><span style='color:#e74c3c; font-size:16px;'>(คืนนี้ฆ่าได้ 2 คน!)</span>";
+    }
+
+    speak(voiceText);
+    
+    let options = players.map((p, i) => p.alive ? `<button id="wolf-btn-${i}" onclick="selectWolfTarget(${i})">${p.name}</button>` : "").join("");
+    options += `<br><br><button style="background:#7f8c8d;" onclick="selectWolfTarget(null)">ข้าม (ไม่ใช้พลัง)</button>`;
+    
+    document.getElementById("game").innerHTML = `
+        <h2>🐺 Werewolf</h2><p>เลือกคนที่คุณต้องการฆ่า${extraText}:</p>
+        <div id="nightTimerDisplay">${nightTimeRemaining}</div>
+        <div id="nightOptions">${options}</div>
+        <div id="nightResult" style="min-height: 40px; margin-top: 10px; font-weight: bold; font-size: 20px;"></div>
+    `;
+    
+    startNightTimer(() => {
+        speak("หมาป่าหลับตา");
+        document.getElementById("game").innerHTML = `<h2>🌙 กลางคืน</h2><p>รอสักครู่ หมาป่ากำลังหลับตา...</p>`;
+        setTimeout(seerTurn, 3500);
+    });
+}
+
+// --- ผู้หยั่งรู้ ---
+function seerTurn() {
+    nightTimeRemaining = Math.floor(Math.random() * 6) + 10;
+    selectedNightTarget = null;
+    speak("ผู้หยั่งรู้ลืมตา... เลือกดูบทบาทของหนึ่งคน");
+    
+    let options = players.map((p, i) => p.alive ? `<button onclick="selectNightTarget(${i}, 'seer')">${p.name}</button>` : "").join("");
+    options += `<br><br><button style="background:#7f8c8d;" onclick="selectNightTarget(null, 'seer')">ข้าม (ไม่ใช้พลัง)</button>`;
+    
+    document.getElementById("game").innerHTML = `
+        <h2>🔮 Seer</h2><p>เลือกคนที่คุณต้องการดูบทบาท:</p>
+        <div id="nightTimerDisplay">${nightTimeRemaining}</div>
+        <div id="nightOptions">${options}</div>
+        <div id="nightResult" style="min-height: 40px; margin-top: 10px; font-weight: bold; font-size: 20px;"></div>
+    `;
+    
+    startNightTimer(() => {
+        speak("ผู้หยั่งรู้หลับตา");
+        document.getElementById("game").innerHTML = `<h2>🌙 กลางคืน</h2><p>รอสักครู่ ผู้หยั่งรู้กำลังหลับตา...</p>`;
+        setTimeout(doctorTurn, 3500);
+    });
+}
+
+// --- หมอ ---
+function doctorTurn() {
+    nightTimeRemaining = Math.floor(Math.random() * 6) + 10;
+    selectedNightTarget = null;
+    speak("หมอลืมตา... เลือกหนึ่งคนเพื่อคุ้มครองในคืนนี้");
+    
+    let options = players.map((p, i) => p.alive ? `<button onclick="selectNightTarget(${i}, 'doctor')">${p.name}</button>` : "").join("");
+    options += `<br><br><button style="background:#7f8c8d;" onclick="selectNightTarget(null, 'doctor')">ข้าม (ไม่ใช้พลัง)</button>`;
+
+    document.getElementById("game").innerHTML = `
+        <h2>💊 Doctor</h2><p>เลือกคนที่คุณต้องการช่วยชีวิต:</p>
+        <div id="nightTimerDisplay">${nightTimeRemaining}</div>
+        <div id="nightOptions">${options}</div>
+        <div id="nightResult" style="min-height: 40px; margin-top: 10px; font-weight: bold; font-size: 20px;"></div>
+    `;
+    
+    startNightTimer(() => {
+        saveTarget = selectedNightTarget;
+        speak("หมอหลับตา");
+        document.getElementById("game").innerHTML = `<h2>🌙 กลางคืน</h2><p>รอสักครู่ หมอกำลังหลับตา...</p>`;
+        
+        // จบเทิร์นหมอ ข้ามไปตอนเช้าเลย (ตัดแม่มดทิ้งแล้ว)
+        setTimeout(startDay, 3500); 
+    });
+}
+
+// ================= DAY PHASE (กลางวันโหวตออก) =================
+function startDay() {
+    speak("ทุกคนลืมตา... เช้าวันใหม่มาเยือนแล้ว");
+    deadThisRound = [];
+    
+    // ตรวจสอบเป้าหมายของหมาป่าว่าถูกหมอเซฟหรือไม่
+    killTargets.forEach(target => {
+        if (target !== saveTarget && target !== null) {
+            deadThisRound.push(target);
+        }
+    });
+
+    let deadText = "เมื่อคืนนี้... ไม่มีใครตาย";
+    if (deadThisRound.length > 0) {
+        let deadNames = deadThisRound.map(i => players[i].name).join(" และ ");
+        deadText = `ศพที่พบเมื่อคืนนี้คือ: ${deadNames}`;
+        
+        // อัปเดตสถานะการตาย และเช็คว่าลูกหมาป่าตายหรือไม่
+        deadThisRound.forEach(i => {
+            players[i].alive = false;
+            if (players[i].role === "wolfcub") {
+                wolfKillsNextNight = 2; // ถ้าลูกหมาป่าตาย ให้โควต้าฆ่าเป็น 2 ในคืนถัดไป
+            }
+        });
+    }
+    
+    speak(deadText);
+    document.getElementById("game").innerHTML = `
+        <h2>🌞 กลางวัน</h2><h3 style="color:#e74c3c;">${deadText}</h3>
+        <button class="action-btn" onclick="checkHunterDeathPhase1()">ต่อไป</button>
+    `;
+}
+
+function checkHunterDeathPhase1() {
+    let hunterDead = deadThisRound.find(i => players[i].role === "hunter");
+    if (hunterDead !== undefined) triggerHunterTurn(players[hunterDead].name, startDiscussion);
+    else startDiscussion();
+}
+
+function startDiscussion() {
+    if(checkWinCondition()) return; 
+    
+    timeRemaining = 300; 
+    speak("ถึงเวลาปรึกษาหารือ คุณมีเวลาห้านาที");
+    
+    document.getElementById("game").innerHTML = `
+        <h2>🗣️ ช่วงพูดคุย</h2>
+        <div id="timerDisplay">${formatTime(timeRemaining)}</div>
+        <button class="action-btn" onclick="skipTimer()">หยุดเวลา & ไปโหวต</button>
+    `;
+    
+    timerInterval = setInterval(() => {
+        timeRemaining--;
+        document.getElementById("timerDisplay").innerText = formatTime(timeRemaining);
+        if (timeRemaining <= 30 && timeRemaining > 0) {
+            document.getElementById("timerDisplay").style.color = "#e74c3c"; 
+        }
+        if (timeRemaining <= 0) skipTimer();
+    }, 1000);
+}
+
+function skipTimer() { clearInterval(timerInterval); votePhase(); }
+
+function votePhase() {
+    let options = players.map((p, i) => p.alive ? `<button onclick="vote(${i})">${p.name}</button>` : "").join("");
+    speak("เวลาหมดลงแล้ว... ใครคือคนที่พวกคุณสงสัยที่สุด?");
+    document.getElementById("game").innerHTML = `
+        <h2>🗳️ โหวตประหาร</h2><p>เลือกคนที่คุณต้องการโหวตออก:</p>${options}<br><br>
+        <button style="background:#7f8c8d;" onclick="skipVote()">ไม่มีคนถูกโหวตออก (ข้าม)</button>
+    `;
+}
+
+function skipVote() { if (!checkWinCondition(true)) startNight(); }
+
+function vote(i) {
+    players[i].alive = false;
+    
+    // ตรวจสอบว่าคนที่โดนโหวตออกคือลูกหมาป่าหรือไม่
+    if (players[i].role === "wolfcub") {
+        wolfKillsNextNight = 2;
+    }
+
+    speak(players[i].name + " ถูกโหวตออกไป");
+    document.getElementById("game").innerHTML = `
+        <h2>ผลโหวต</h2><h3 style="color:#e74c3c;">${players[i].name} ถูกประหาร!</h3>
+        <button class="action-btn" onclick="checkHunterDeathPhase2(${i})">ตรวจสอบสถานะ</button>
+    `;
+}
+
+function checkHunterDeathPhase2(votedIndex) {
+    if (players[votedIndex].role === "hunter") {
+        triggerHunterTurn(players[votedIndex].name, () => { if (!checkWinCondition()) startNight(); });
+    } else { if (!checkWinCondition()) startNight(); }
+}
+
+function triggerHunterTurn(hunterName, nextPhaseCallback) {
+    speak("เดี๋ยวก่อน! " + hunterName + " คือนายพราน ก่อนตายเขาจะยิงใครหนึ่งคน");
+    let options = players.map((p, i) => p.alive ? `<button onclick="hunterShoot(${i})">${p.name}</button>` : "").join("");
+    document.getElementById("game").innerHTML = `
+        <h2>🔫 การล้างแค้นของ Hunter</h2><p><b>${hunterName}</b> คือนายพราน! โปรดเลือก 1 คนที่จะตายตามไป:</p>${options}
+    `;
+    window.pendingHunterCallback = nextPhaseCallback;
+}
+
+function hunterShoot(i) {
+    players[i].alive = false;
+
+    // ตรวจสอบว่าคนที่โดนนายพรานยิงตายคือลูกหมาป่าหรือไม่
+    if (players[i].role === "wolfcub") {
+        wolfKillsNextNight = 2;
+    }
+
+    speak("ปัง! " + players[i].name + " ถูกนายพรานยิงตาย");
+    document.getElementById("game").innerHTML = `
+        <h2>ผลจากนายพราน</h2><h3 style="color:#e74c3c;">${players[i].name} ล้มลงสิ้นใจตาย!</h3>
+        <button class="action-btn" onclick="window.pendingHunterCallback()">ดำเนินเกมต่อ</button>
+    `;
+}
+
+function checkWinCondition(silentCheck = false) {
+    // ให้นับลูกหมาป่าเป็นฝ่ายหมาป่าด้วย
+    let wolves = players.filter(p => (p.role == "wolf" || p.role == "wolfcub") && p.alive).length;
+    let villagers = players.filter(p => p.role != "wolf" && p.role != "wolfcub" && p.alive).length;
+    
+    if (wolves == 0) {
+        if(!silentCheck) {
+            speak("หมาป่าตายหมดแล้ว ชาวบ้านเป็นผู้ชนะ!");
+            document.getElementById("game").innerHTML = `<h1>🎉 Villagers ชนะ!</h1><p>หมู่บ้านกลับมาสงบสุขอีกครั้ง</p><button class="action-btn" onclick="location.reload()">เล่นใหม่</button>`;
+        }
+        return true;
+    }
+    
+    if (wolves >= villagers) {
+        if(!silentCheck) {
+            speak("หมาป่ามีจำนวนเท่ากับชาวบ้าน... หมาป่าเป็นผู้ชนะ!");
+            document.getElementById("game").innerHTML = `<h1>🐺 Werewolf ชนะ!</h1><p>หมู่บ้านนี้ตกเป็นของเหล่าหมาป่า</p><button class="action-btn" onclick="location.reload()">เล่นใหม่</button>`;
+        }
+        return true;
+    }
+    
+    return false;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>คู่มือบทบาท - Werewolf Ultimate</title>
+<style>
+    body { 
+        font-family: 'Arial', sans-serif; 
+        background: #111; 
+        color: white; 
+        text-align: center; 
+        margin: 0; 
+        padding: 20px; 
+    }
+    h1 { color: #f0f0f0; margin-bottom: 30px; }
+    
+    .card-container { 
+        display: flex; 
+        flex-wrap: wrap; 
+        justify-content: center; 
+        gap: 20px; 
+        max-width: 1000px; 
+        margin: 0 auto; 
+    }
+    
+    .card { 
+        background: #222; 
+        border-radius: 12px; 
+        padding: 25px 20px; 
+        width: 280px; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.6); 
+        border: 2px solid #444; 
+        transition: transform 0.3s, border-color 0.3s; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .card:hover { transform: translateY(-5px); }
+    
+    /* สีขอบการ์ดตามทีม */
+    .card.wolf-team:hover { border-color: #c0392b; }
+    .card.villager-team:hover { border-color: #2980b9; }
+    
+    .icon { font-size: 60px; margin-bottom: 15px; }
+    .role-title { font-size: 24px; font-weight: bold; margin: 0 0 10px 0; color: #fff; }
+    
+    .team-badge { 
+        display: inline-block; 
+        padding: 5px 12px; 
+        border-radius: 20px; 
+        font-size: 14px; 
+        font-weight: bold;
+        margin-bottom: 15px; 
+    }
+    .wolf-badge { background: #c0392b; color: white; }
+    .villager-badge { background: #2980b9; color: white; }
+    
+    .desc { font-size: 16px; color: #ccc; line-height: 1.5; }
+    .highlight { color: #f1c40f; font-weight: bold; }
+
+    .btn-back { 
+        display: inline-block; 
+        margin-top: 40px; 
+        padding: 12px 30px; 
+        background: #7f8c8d; 
+        color: white; 
+        text-decoration: none; 
+        border-radius: 8px; 
+        font-size: 18px; 
+        transition: 0.3s;
+    }
+    .btn-back:hover { background: #95a5a6; }
+</style>
+</head>
+<body>
+
+    <h1>🎭 คู่มือบทบาท (Role Cards)</h1>
+
+    <div class="card-container">
+        
+        <div class="card wolf-team">
+            <div class="icon">🐺</div>
+            <div class="role-title">หมาป่า (Werewolf)</div>
+            <div class="team-badge wolf-badge">ทีมหมาป่า</div>
+            <div class="desc">
+                ตื่นขึ้นมาในตอนกลางคืนเพื่อเลือก <span class="highlight">ฆ่าชาวบ้าน 1 คน</span> เป้าหมายคือต้องเนียนเป็นชาวบ้าน และทำให้ทีมหมาป่ามีจำนวนเท่ากับหรือมากกว่าชาวบ้าน
+            </div>
+        </div>
+
+        <div class="card wolf-team">
+            <div class="icon">🐶</div>
+            <div class="role-title">ลูกหมาป่า (Wolf Cub)</div>
+            <div class="team-badge wolf-badge">ทีมหมาป่า</div>
+            <div class="desc">
+                เป็นฝ่ายเดียวกับหมาป่า แต่ไม่มีพลังฆ่าใคร <br><br>
+                <span class="highlight">ความสามารถพิเศษ:</span> หากคุณตาย (โดนโหวตออก หรือโดนยิง) คืนถัดไปหมาป่าจะโกรธแค้นและ <span class="highlight">ฆ่าคนได้ 2 คน</span>
+            </div>
+        </div>
+
+        <div class="card villager-team">
+            <div class="icon">🔮</div>
+            <div class="role-title">ผู้หยั่งรู้ (Seer)</div>
+            <div class="team-badge villager-badge">ทีมชาวบ้าน</div>
+            <div class="desc">
+                ตื่นขึ้นมาในตอนกลางคืนเพื่อ <span class="highlight">ดูบทบาทของผู้เล่นอื่นได้คืนละ 1 คน</span> คุณคือความหวังหมู่บ้าน ต้องใช้ข้อมูลที่ได้มาชี้นำเพื่อนๆ โดยไม่ให้หมาป่ารู้ตัว
+            </div>
+        </div>
+
+        <div class="card villager-team">
+            <div class="icon">💊</div>
+            <div class="role-title">หมอ (Doctor)</div>
+            <div class="team-badge villager-badge">ทีมชาวบ้าน</div>
+            <div class="desc">
+                ตื่นขึ้นมาในตอนกลางคืนเพื่อ <span class="highlight">เลือกปกป้อง 1 คน</span> (เลือกตัวเองก็ได้) หากคนที่คุณปกป้องถูกหมาป่ากัดในคืนนั้น เขาจะไม่ตาย
+            </div>
+        </div>
+
+        <div class="card villager-team">
+            <div class="icon">🔫</div>
+            <div class="role-title">นายพราน (Hunter)</div>
+            <div class="team-badge villager-badge">ทีมชาวบ้าน</div>
+            <div class="desc">
+                ตอนที่ยังมีชีวิตจะเป็นเหมือนชาวบ้านปกติ <br><br>
+                <span class="highlight">ความสามารถพิเศษ:</span> หากคุณตายลง (ไม่ว่าจะโดนหมาป่ากัด หรือโดนโหวตออก) คุณจะสามารถ <span class="highlight">ลั่นไกปืนปลิดชีพใครก็ได้ตามไป 1 คน</span>
+            </div>
+        </div>
+
+        <div class="card villager-team">
+            <div class="icon">👨‍🌾</div>
+            <div class="role-title">ชาวบ้าน (Villager)</div>
+            <div class="team-badge villager-badge">ทีมชาวบ้าน</div>
+            <div class="desc">
+                หลับตาตลอดทั้งคืน ไม่มีพลังพิเศษใดๆ <br><br>
+                <span class="highlight">หน้าที่ของคุณ:</span> จับผิดคำพูด พฤติกรรมของคนอื่น และรวมพลังกันโหวตหมาป่าออกจากหมู่บ้านให้หมด
+            </div>
+        </div>
+
+    </div>
+
+    <a href="index.html" class="btn-back">⬅️ กลับไปหน้าเริ่มเกม</a>
+
+</body>
+</html>
