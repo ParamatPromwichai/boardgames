@@ -213,6 +213,7 @@ function speak(title, detail) {
 let isFlipped = false;
 
 function drawCard() {
+    unlockAudioOnMobile(); // ปลดล็อกเสียงบนมือถือก่อนจั่วไพ่
     let cardEl = document.getElementById('playingCard');
     let titleEl = document.getElementById('ruleTitle');
     let detailEl = document.getElementById('ruleDetail');
@@ -263,6 +264,19 @@ function showCardData(card) {
 
     // AI อ่านกติกา
     speak(rule.title, rule.detail);
+}
+// ฟังก์ชันหลอกให้เบราว์เซอร์ปลดล็อกระบบเสียงบนมือถือ
+function unlockAudioOnMobile() {
+    if ('speechSynthesis' in window) {
+        let dummy = new SpeechSynthesisUtterance(""); 
+        dummy.volume = 0; // สั่งให้พูดแบบปิดเสียง
+        window.speechSynthesis.speak(dummy);
+    }
+    
+    // ถ้ามีเสียงเอฟเฟกต์ BGM ด้วย ให้ปลดล็อกแบบนี้คู่กัน
+    if (typeof bgm !== 'undefined') {
+        bgm.play().then(() => { bgm.pause(); }).catch(e => {});
+    }
 }
 
 // เริ่มต้นสร้างกองไพ่เมื่อเปิดหน้าเว็บ
