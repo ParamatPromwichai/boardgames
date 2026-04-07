@@ -40,6 +40,7 @@
 
     <button onclick="startGame()" style="background:#27ae60; margin-top: 20px;">เริ่มเกม</button>
     <button onclick="window.location.href='card.html'">ดูรายละเอียดบทบาท</button>
+
 </div>
 
 <div id="game" class="hidden"></div>
@@ -75,6 +76,19 @@ function speak(text) {
     msg.rate = 0.9;
     speechSynthesis.cancel();
     speechSynthesis.speak(msg);
+}
+// ฟังก์ชันหลอกให้เบราว์เซอร์ปลดล็อกระบบเสียงบนมือถือ
+function unlockAudioOnMobile() {
+    if ('speechSynthesis' in window) {
+        let dummy = new SpeechSynthesisUtterance(""); 
+        dummy.volume = 0; // สั่งให้พูดแบบปิดเสียง
+        window.speechSynthesis.speak(dummy);
+    }
+    
+    // ถ้ามีเสียงเอฟเฟกต์ BGM ด้วย ให้ปลดล็อกแบบนี้คู่กัน
+    if (typeof bgm !== 'undefined') {
+        bgm.play().then(() => { bgm.pause(); }).catch(e => {});
+    }
 }
 
 // ตัวแปรข้อมูลเกม
@@ -129,6 +143,7 @@ function shuffle(array) {
 }
 
 function startGame() {
+    unlockAudioOnMobile();
     loadVoices();
     document.getElementById("setup").classList.add("hidden");
     document.getElementById("game").classList.remove("hidden");
