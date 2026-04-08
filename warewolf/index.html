@@ -54,6 +54,10 @@
 let selectedVoice = null;
 
 
+window.onload = function() {
+    generateInputs();
+};
+
 // ให้ iOS โหลดเสียงให้เสร็จก่อน ค่อยดึงข้อมูล (แก้ปัญหาเสียงไม่มาใน iPhone)
 if ('speechSynthesis' in window) {
     window.speechSynthesis.onvoiceschanged = loadVoices;
