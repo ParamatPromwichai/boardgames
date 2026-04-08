@@ -54,28 +54,47 @@
 let selectedVoice = null;
 
 
-window.onload = function() {
-    generateInputs();
-};
+// ให้ iOS โหลดเสียงให้เสร็จก่อน ค่อยดึงข้อมูล (แก้ปัญหาเสียงไม่มาใน iPhone)
+if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
 
 function loadVoices() {
     if (!window.speechSynthesis) return;
     let voices = speechSynthesis.getVoices();
     let type = document.getElementById("voiceSelect").value;
-    selectedVoice = voices.find(v =>
-        type === "female" ? v.name.toLowerCase().includes("female") : v.name.toLowerCase().includes("male")
-    ) || voices[0];
+    
+    // พยายามหาเสียงภาษาไทยให้เจอก่อน (iOS มักจะงงถ้าไม่ระบุ lang ชัดเจน)
+    selectedVoice = voices.find(v => v.lang.includes("th") && (type === "female" ? v.name.toLowerCase().includes("female") : v.name.toLowerCase().includes("male"))) 
+                 || voices.find(v => v.lang.includes("th")) 
+                 || voices[0];
 }
 
-function speak(text) {
-    if (!window.speechSynthesis) return;
-    let msg = new SpeechSynthesisUtterance(text);
-    msg.lang = "th-TH";
-    if (selectedVoice) msg.voice = selectedVoice;
-    msg.pitch = 0.8;
-    msg.rate = 0.9;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(msg);
+function speak(text, callback) {
+    if (!window.speechSynthesis) {
+        if(callback) setTimeout(callback, 3000);
+        return;
+    }
+
+    // แก้บั๊ก iOS: สั่ง cancel เฉพาะตอนที่มันกำลังพูดอยู่จริงๆ เท่านั้น
+    if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+    }
+
+    // หน่วงเวลาให้ iPhone เคลียร์คิวเสียงเก่า ป้องกันการค้าง
+    setTimeout(() => {
+        let msg = new SpeechSynthesisUtterance(text);
+        msg.lang = "th-TH";
+        if (selectedVoice) msg.voice = selectedVoice;
+        msg.pitch = 0.9;
+        msg.rate = 0.85;
+
+        // ดัก Event ตอนพูดจบ หรือ เกิด Error (สำคัญมากสำหรับ iOS)
+        msg.onend = function() { if(callback) callback(); };
+        msg.onerror = function(e) { console.log("Speech Error:", e); if(callback) callback(); };
+
+        speechSynthesis.speak(msg);
+    }, 50);
 }
 
 
