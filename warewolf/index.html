@@ -77,19 +77,7 @@ function speak(text) {
     speechSynthesis.cancel();
     speechSynthesis.speak(msg);
 }
-// ฟังก์ชันหลอกให้เบราว์เซอร์ปลดล็อกระบบเสียงบนมือถือ
-function unlockAudioOnMobile() {
-    if ('speechSynthesis' in window) {
-        let dummy = new SpeechSynthesisUtterance(""); 
-        dummy.volume = 0; // สั่งให้พูดแบบปิดเสียง
-        window.speechSynthesis.speak(dummy);
-    }
-    
-    // ถ้ามีเสียงเอฟเฟกต์ BGM ด้วย ให้ปลดล็อกแบบนี้คู่กัน
-    if (typeof bgm !== 'undefined') {
-        bgm.play().then(() => { bgm.pause(); }).catch(e => {});
-    }
-}
+
 
 // ตัวแปรข้อมูลเกม
 let players = [];
@@ -538,6 +526,20 @@ function checkWinCondition(silentCheck = false) {
     }
     
     return false;
+}
+
+// ฟังก์ชันหลอกให้เบราว์เซอร์ปลดล็อกระบบเสียงบนมือถือ
+function unlockAudioOnMobile() {
+    if ('speechSynthesis' in window) {
+        let dummy = new SpeechSynthesisUtterance(""); 
+        dummy.volume = 0; // สั่งให้พูดแบบปิดเสียง
+        window.speechSynthesis.speak(dummy);
+    }
+    
+    // ถ้ามีเสียงเอฟเฟกต์ BGM ด้วย ให้ปลดล็อกแบบนี้คู่กัน
+    if (typeof bgm !== 'undefined') {
+        bgm.play().then(() => { bgm.pause(); }).catch(e => {});
+    }
 }
 </script>
 
